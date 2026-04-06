@@ -3,7 +3,8 @@
   "compilerOptions": {
     "types": ["bun", "node"],
     "noEmit": true,
-    "rootDir": "."
+    "rootDir": ".",
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts"]
+  "include": ["src/**/*.ts", "tests/**/*.ts"],
+  "exclude": ["node_modules", "dist"],
 }
