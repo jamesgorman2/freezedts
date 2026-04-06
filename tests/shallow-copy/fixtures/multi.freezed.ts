@@ -17,6 +17,16 @@ export abstract class $Address {
     this.zip = params.zip;
     Object.freeze(this);
   }
+
+  with(overrides: Partial<AddressParams>): this {
+    const Ctor = this.constructor as new (params: AddressParams) => this;
+    return new Ctor({
+      street: this.street,
+      city: this.city,
+      zip: this.zip,
+      ...overrides,
+    });
+  }
 }
 
 export type ContactParams = {
@@ -32,5 +42,14 @@ export abstract class $Contact {
     this.name = params.name;
     this.email = params.email;
     Object.freeze(this);
+  }
+
+  with(overrides: Partial<ContactParams>): this {
+    const Ctor = this.constructor as new (params: ContactParams) => this;
+    return new Ctor({
+      name: this.name,
+      email: this.email,
+      ...overrides,
+    });
   }
 }

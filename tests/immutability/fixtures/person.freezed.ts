@@ -17,4 +17,14 @@ export abstract class $Person {
     this.age = params.age;
     Object.freeze(this);
   }
+
+  with(overrides: Partial<PersonParams>): this {
+    const Ctor = this.constructor as new (params: PersonParams) => this;
+    return new Ctor({
+      firstName: this.firstName,
+      lastName: this.lastName,
+      age: this.age,
+      ...overrides,
+    });
+  }
 }

@@ -60,6 +60,30 @@ describe('emitFreezedFile', () => {
     expect(output).toContain('  readonly port!: number;');
   });
 
+  it('generates a with() method for shallow copy', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Person',
+        generatedClassName: '$Person',
+        properties: [
+          { name: 'firstName', type: 'string', optional: false },
+          { name: 'lastName', type: 'string', optional: false },
+          { name: 'age', type: 'number', optional: false },
+        ],
+      },
+    ];
+
+    const output = emitFreezedFile(classes);
+
+    expect(output).toContain('with(overrides: Partial<PersonParams>): this {');
+    expect(output).toContain('const Ctor = this.constructor as new (params: PersonParams) => this;');
+    expect(output).toContain('return new Ctor({');
+    expect(output).toContain('firstName: this.firstName,');
+    expect(output).toContain('lastName: this.lastName,');
+    expect(output).toContain('age: this.age,');
+    expect(output).toContain('...overrides,');
+  });
+
   it('generates multiple classes in one file', () => {
     const classes: ParsedFreezedClass[] = [
       {

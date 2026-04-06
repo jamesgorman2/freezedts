@@ -29,6 +29,8 @@ function emitClassBody(cls: ParsedFreezedClass): string {
     .map((p) => `    this.${p.name} = params.${p.name};`)
     .join('\n');
 
+  const withMethod = emitWithMethod(cls);
+
   return `export abstract class ${cls.generatedClassName} {
 ${readonlyFields}
 
@@ -36,5 +38,21 @@ ${readonlyFields}
 ${assignments}
     Object.freeze(this);
   }
+
+${withMethod}
 }`;
+}
+
+function emitWithMethod(cls: ParsedFreezedClass): string {
+  const currentProps = cls.properties
+    .map((p) => `      ${p.name}: this.${p.name},`)
+    .join('\n');
+
+  return `  with(overrides: Partial<${cls.className}Params>): this {
+    const Ctor = this.constructor as new (params: ${cls.className}Params) => this;
+    return new Ctor({
+${currentProps}
+      ...overrides,
+    });
+  }`;
 }
