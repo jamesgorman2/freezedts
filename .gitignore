@@ -1,2 +1,25 @@
+**/*.freezed.ts
+
 node_modules
 dist
+
+# Typescript
+*.tsbuildinfo
+
+# Claude Code
+.claude/worktrees/*/
+
+# Worktrees
+.worktrees/
+
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+migrate_working_dir/
