@@ -64,7 +64,7 @@ describe('emitFreezedFile', () => {
 
     const output = emitFreezedFile(classes);
     // With type — no @freezed properties, so simple callable
-    expect(output).toContain('type PersonWith<Self> = {');
+    expect(output).toContain('export type PersonWith<Self> = {');
     expect(output).toContain('  (overrides: Partial<PersonParams>): Self;');
     // Getter
     expect(output).toContain('get with(): PersonWith<this>');
@@ -96,11 +96,11 @@ describe('emitFreezedFile', () => {
 
     const output = emitFreezedFile(classes);
     // Outer's With type includes inner chain
-    expect(output).toContain('type OuterWith<Self> = {');
+    expect(output).toContain('export type OuterWith<Self> = {');
     expect(output).toContain('  (overrides: Partial<OuterParams>): Self;');
     expect(output).toContain('  inner: InnerWith<Self>;');
     // Inner's With type has no nested members
-    expect(output).toContain('type InnerWith<Self> = {');
+    expect(output).toContain('export type InnerWith<Self> = {');
   });
 
   it('replaces @freezed property types with $ClassName in params and readonly', () => {
@@ -250,7 +250,7 @@ describe('emitFreezedFile', () => {
     expect(output).toContain('export abstract class $Child {');
     expect(output).toContain('export type PersonParams = {');
     expect(output).toContain('export type ChildParams = {');
-    expect(output).toContain('type PersonWith<Self>');
-    expect(output).toContain('type ChildWith<Self>');
+    expect(output).toContain('export type PersonWith<Self>');
+    expect(output).toContain('export type ChildWith<Self>');
   });
 });

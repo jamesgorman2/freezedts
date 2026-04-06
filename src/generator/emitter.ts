@@ -65,9 +65,9 @@ function emitWithType(cls: ParsedFreezedClass): string {
     .join('\n');
   const callSig = `  (overrides: Partial<${cls.className}Params>): Self;`;
   if (freezedProps.length === 0) {
-    return `type ${cls.className}With<Self> = {\n${callSig}\n};`;
+    return `export type ${cls.className}With<Self> = {\n${callSig}\n};`;
   }
-  return `type ${cls.className}With<Self> = {\n${callSig}\n${members}\n};`;
+  return `export type ${cls.className}With<Self> = {\n${callSig}\n${members}\n};`;
 }
 
 function emitClassBody(cls: ParsedFreezedClass): string {
