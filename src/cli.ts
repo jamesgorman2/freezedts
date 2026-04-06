@@ -1,5 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { generate } from './generator/generator.js';
 
 const EXCLUDED_DIRS = new Set(['node_modules', 'dist', '.git']);
@@ -52,7 +53,7 @@ function main() {
 const isMainModule =
   process.argv[1] &&
   path.resolve(process.argv[1]).replace(/\.[^.]+$/, '') ===
-    path.resolve(new URL(import.meta.url).pathname).replace(/\.[^.]+$/, '');
+    fileURLToPath(import.meta.url).replace(/\.[^.]+$/, '');
 
 if (isMainModule) {
   main();
