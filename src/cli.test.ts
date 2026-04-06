@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'bun:test';
 import { resolveSourceFiles } from './cli.js';
 import * as fs from 'node:fs';
 import * as path from 'node:path';

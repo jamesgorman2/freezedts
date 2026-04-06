@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'bun:test';
 import { generate } from './generator.js';
 import * as fs from 'node:fs';
 import * as path from 'node:path';

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll } from 'bun:test';
 import * as path from 'node:path';
 import { generate } from '../../src/generator/generator.js';
 
