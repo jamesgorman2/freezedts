@@ -8,10 +8,11 @@ describe('emitFreezedFile', () => {
       {
         className: 'Person',
         generatedClassName: '$Person',
+        hasFieldConfig: false,
         properties: [
-          { name: 'firstName', type: 'string', optional: false },
-          { name: 'lastName', type: 'string', optional: false },
-          { name: 'age', type: 'number', optional: false },
+          { name: 'firstName', type: 'string', optional: false, hasDefault: false },
+          { name: 'lastName', type: 'string', optional: false, hasDefault: false },
+          { name: 'age', type: 'number', optional: false, hasDefault: false },
         ],
       },
     ];
@@ -46,9 +47,10 @@ describe('emitFreezedFile', () => {
       {
         className: 'Config',
         generatedClassName: '$Config',
+        hasFieldConfig: false,
         properties: [
-          { name: 'host', type: 'string', optional: false },
-          { name: 'port', type: 'number', optional: true },
+          { name: 'host', type: 'string', optional: false, hasDefault: false },
+          { name: 'port', type: 'number', optional: true, hasDefault: false },
         ],
       },
     ];
@@ -65,10 +67,11 @@ describe('emitFreezedFile', () => {
       {
         className: 'Person',
         generatedClassName: '$Person',
+        hasFieldConfig: false,
         properties: [
-          { name: 'firstName', type: 'string', optional: false },
-          { name: 'lastName', type: 'string', optional: false },
-          { name: 'age', type: 'number', optional: false },
+          { name: 'firstName', type: 'string', optional: false, hasDefault: false },
+          { name: 'lastName', type: 'string', optional: false, hasDefault: false },
+          { name: 'age', type: 'number', optional: false, hasDefault: false },
         ],
       },
     ];
@@ -89,14 +92,16 @@ describe('emitFreezedFile', () => {
       {
         className: 'Person',
         generatedClassName: '$Person',
-        properties: [{ name: 'name', type: 'string', optional: false }],
+        hasFieldConfig: false,
+        properties: [{ name: 'name', type: 'string', optional: false, hasDefault: false }],
       },
       {
         className: 'Child',
         generatedClassName: '$Child',
+        hasFieldConfig: false,
         properties: [
-          { name: 'name', type: 'string', optional: false },
-          { name: 'parentName', type: 'string', optional: false },
+          { name: 'name', type: 'string', optional: false, hasDefault: false },
+          { name: 'parentName', type: 'string', optional: false, hasDefault: false },
         ],
       },
     ];

@@ -28,10 +28,11 @@ describe('parseFreezedClasses', () => {
       {
         className: 'Person',
         generatedClassName: '$Person',
+        hasFieldConfig: false,
         properties: [
-          { name: 'firstName', type: 'string', optional: false },
-          { name: 'lastName', type: 'string', optional: false },
-          { name: 'age', type: 'number', optional: false },
+          { name: 'firstName', type: 'string', optional: false, hasDefault: false },
+          { name: 'lastName', type: 'string', optional: false, hasDefault: false },
+          { name: 'age', type: 'number', optional: false, hasDefault: false },
         ],
       },
     ]);
@@ -52,8 +53,8 @@ describe('parseFreezedClasses', () => {
 
     const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
     expect(result[0].properties).toEqual([
-      { name: 'host', type: 'string', optional: false },
-      { name: 'port', type: 'number', optional: true },
+      { name: 'host', type: 'string', optional: false, hasDefault: false },
+      { name: 'port', type: 'number', optional: true, hasDefault: false },
     ]);
   });
 
@@ -105,9 +106,72 @@ describe('parseFreezedClasses', () => {
 
     const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
     expect(result[0].properties).toEqual([
-      { name: 'name', type: 'string', optional: false },
-      { name: 'members', type: 'string[]', optional: false },
-      { name: 'metadata', type: 'Record<string, unknown>', optional: false },
+      { name: 'name', type: 'string', optional: false, hasDefault: false },
+      { name: 'members', type: 'string[]', optional: false, hasDefault: false },
+      { name: 'metadata', type: 'Record<string, unknown>', optional: false, hasDefault: false },
     ]);
+  });
+
+  it('detects hasFieldConfig when @freezed has fields option', () => {
+    const project = createTestProject(`
+      import { freezed } from 'freezedts';
+
+      @freezed({
+        fields: {
+          age: { default: 0 },
+        }
+      })
+      class Person {
+        constructor(params: {
+          name: string;
+          age?: number;
+        }) {}
+      }
+    `);
+
+    const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
+    expect(result[0].hasFieldConfig).toBe(true);
+  });
+
+  it('sets hasDefault on properties with default config', () => {
+    const project = createTestProject(`
+      import { freezed } from 'freezedts';
+
+      @freezed({
+        fields: {
+          age: { default: 0 },
+          email: { assert: (v: string) => v.length > 0 },
+        }
+      })
+      class Person {
+        constructor(params: {
+          name: string;
+          age?: number;
+          email: string;
+        }) {}
+      }
+    `);
+
+    const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
+    expect(result[0].properties).toEqual([
+      { name: 'name', type: 'string', optional: false, hasDefault: false },
+      { name: 'age', type: 'number', optional: true, hasDefault: true },
+      { name: 'email', type: 'string', optional: false, hasDefault: false },
+    ]);
+  });
+
+  it('sets hasFieldConfig false when no fields option', () => {
+    const project = createTestProject(`
+      import { freezed } from 'freezedts';
+
+      @freezed()
+      class Person {
+        constructor(params: { name: string }) {}
+      }
+    `);
+
+    const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
+    expect(result[0].hasFieldConfig).toBe(false);
+    expect(result[0].properties[0].hasDefault).toBe(false);
   });
 });
