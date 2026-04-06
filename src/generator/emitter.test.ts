@@ -87,6 +87,72 @@ describe('emitFreezedFile', () => {
     expect(output).toContain('...overrides,');
   });
 
+  it('makes hasDefault properties optional in params type', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Counter',
+        generatedClassName: '$Counter',
+        hasFieldConfig: true,
+        properties: [
+          { name: 'name', type: 'string', optional: false, hasDefault: false },
+          { name: 'count', type: 'number', optional: false, hasDefault: true },
+        ],
+      },
+    ];
+
+    const output = emitFreezedFile(classes);
+    expect(output).toContain('  name: string;');
+    expect(output).toContain('  count?: number;');
+  });
+
+  it('generates field config processing block when hasFieldConfig is true', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Counter',
+        generatedClassName: '$Counter',
+        hasFieldConfig: true,
+        properties: [
+          { name: 'name', type: 'string', optional: false, hasDefault: false },
+          { name: 'count', type: 'number', optional: false, hasDefault: true },
+        ],
+      },
+    ];
+
+    const output = emitFreezedFile(classes);
+
+    // Processing block present
+    expect(output).toContain("Symbol.for('freezedts:options')");
+    expect(output).toContain('const resolved = { ...params } as Required<CounterParams>;');
+    expect(output).toContain("if ('default' in config");
+    expect(output).toContain('config.assert');
+
+    // Assignments use resolved
+    expect(output).toContain('this.name = resolved.name;');
+    expect(output).toContain('this.count = resolved.count;');
+  });
+
+  it('omits processing block when hasFieldConfig is false', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Simple',
+        generatedClassName: '$Simple',
+        hasFieldConfig: false,
+        properties: [
+          { name: 'value', type: 'string', optional: false, hasDefault: false },
+        ],
+      },
+    ];
+
+    const output = emitFreezedFile(classes);
+
+    // No processing block
+    expect(output).not.toContain('Symbol.for');
+    expect(output).not.toContain('resolved');
+
+    // Assignments use params directly
+    expect(output).toContain('this.value = params.value;');
+  });
+
   it('generates multiple classes in one file', () => {
     const classes: ParsedFreezedClass[] = [
       {

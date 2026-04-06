@@ -15,7 +15,10 @@ function emitClass(cls: ParsedFreezedClass): string {
 
 function emitParamsType(cls: ParsedFreezedClass): string {
   const fields = cls.properties
-    .map((p) => `  ${p.name}${p.optional ? '?' : ''}: ${p.type};`)
+    .map((p) => {
+      const optional = p.optional || p.hasDefault;
+      return `  ${p.name}${optional ? '?' : ''}: ${p.type};`;
+    })
     .join('\n');
   return `export type ${cls.className}Params = {\n${fields}\n};`;
 }
@@ -25,8 +28,14 @@ function emitClassBody(cls: ParsedFreezedClass): string {
     .map((p) => `  readonly ${p.name}!: ${p.type};`)
     .join('\n');
 
+  const paramsVar = cls.hasFieldConfig ? 'resolved' : 'params';
+
+  const fieldConfigBlock = cls.hasFieldConfig
+    ? emitFieldConfigBlock(cls)
+    : '';
+
   const assignments = cls.properties
-    .map((p) => `    this.${p.name} = params.${p.name};`)
+    .map((p) => `    this.${p.name} = ${paramsVar}.${p.name};`)
     .join('\n');
 
   const withMethod = emitWithMethod(cls);
@@ -35,12 +44,29 @@ function emitClassBody(cls: ParsedFreezedClass): string {
 ${readonlyFields}
 
   constructor(params: ${cls.className}Params) {
-${assignments}
+${fieldConfigBlock}${assignments}
     Object.freeze(this);
   }
 
 ${withMethod}
 }`;
+}
+
+function emitFieldConfigBlock(cls: ParsedFreezedClass): string {
+  const lines = [
+    `    const __options = (new.target as any)[Symbol.for('freezedts:options')];`,
+    `    const __fields: Record<string, any> = __options?.fields ?? {};`,
+    `    const resolved = { ...params } as Required<${cls.className}Params>;`,
+    `    for (const [key, config] of Object.entries(__fields)) {`,
+    `      if ('default' in config && (resolved as any)[key] === undefined) {`,
+    `        (resolved as any)[key] = config.default;`,
+    `      }`,
+    `      if (config.assert && !config.assert((resolved as any)[key])) {`,
+    "        throw new Error(config.message ?? `Assertion failed for '${new.target.name}.${key}'`);",
+    `      }`,
+    `    }`,
+  ];
+  return lines.join('\n') + '\n';
 }
 
 function emitWithMethod(cls: ParsedFreezedClass): string {
