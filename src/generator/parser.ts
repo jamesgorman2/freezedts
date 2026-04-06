@@ -5,6 +5,7 @@ export interface ParsedProperty {
   type: string;
   optional: boolean;
   hasDefault: boolean;
+  isFreezed: boolean;
 }
 
 export interface ParsedFreezedClass {
@@ -89,6 +90,7 @@ function extractProperties(type: Type, defaultFields: Set<string>): ParsedProper
       type: typeText,
       optional: isOptional,
       hasDefault: defaultFields.has(prop.getName()),
+      isFreezed: false,
     };
   });
 }

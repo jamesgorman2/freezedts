@@ -30,9 +30,9 @@ describe('parseFreezedClasses', () => {
         generatedClassName: '$Person',
         hasFieldConfig: false,
         properties: [
-          { name: 'firstName', type: 'string', optional: false, hasDefault: false },
-          { name: 'lastName', type: 'string', optional: false, hasDefault: false },
-          { name: 'age', type: 'number', optional: false, hasDefault: false },
+          { name: 'firstName', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'lastName', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'age', type: 'number', optional: false, hasDefault: false, isFreezed: false },
         ],
       },
     ]);
@@ -53,8 +53,8 @@ describe('parseFreezedClasses', () => {
 
     const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
     expect(result[0].properties).toEqual([
-      { name: 'host', type: 'string', optional: false, hasDefault: false },
-      { name: 'port', type: 'number', optional: true, hasDefault: false },
+      { name: 'host', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+      { name: 'port', type: 'number', optional: true, hasDefault: false, isFreezed: false },
     ]);
   });
 
@@ -106,9 +106,9 @@ describe('parseFreezedClasses', () => {
 
     const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
     expect(result[0].properties).toEqual([
-      { name: 'name', type: 'string', optional: false, hasDefault: false },
-      { name: 'members', type: 'string[]', optional: false, hasDefault: false },
-      { name: 'metadata', type: 'Record<string, unknown>', optional: false, hasDefault: false },
+      { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+      { name: 'members', type: 'string[]', optional: false, hasDefault: false, isFreezed: false },
+      { name: 'metadata', type: 'Record<string, unknown>', optional: false, hasDefault: false, isFreezed: false },
     ]);
   });
 
@@ -154,9 +154,9 @@ describe('parseFreezedClasses', () => {
 
     const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
     expect(result[0].properties).toEqual([
-      { name: 'name', type: 'string', optional: false, hasDefault: false },
-      { name: 'age', type: 'number', optional: true, hasDefault: true },
-      { name: 'email', type: 'string', optional: false, hasDefault: false },
+      { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+      { name: 'age', type: 'number', optional: true, hasDefault: true, isFreezed: false },
+      { name: 'email', type: 'string', optional: false, hasDefault: false, isFreezed: false },
     ]);
   });
 
