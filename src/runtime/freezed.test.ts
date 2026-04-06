@@ -32,4 +32,11 @@ describe('freezed decorator', () => {
     const meta = getFreezedMetadata(Qux);
     expect(meta).toEqual({});
   });
+
+  it('stores options as Symbol property on the class', () => {
+    @freezed({ equality: 'deep' })
+    class Sym {}
+    const options = (Sym as any)[Symbol.for('freezedts:options')];
+    expect(options).toEqual({ equality: 'deep' });
+  });
 });
