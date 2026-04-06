@@ -23,6 +23,6 @@ export function freezed(options?: FreezedOptions) {
   };
 }
 
-export function getFreezedMetadata(target: Function): FreezedOptions | undefined {
+export function getFreezedOptions(target: Function): FreezedOptions | undefined {
   return (target as any)[FREEZED_OPTIONS];
 }

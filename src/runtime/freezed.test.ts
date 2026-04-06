@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'bun:test';
-import { freezed, getFreezedMetadata } from './freezed.js';
+import { freezed, getFreezedOptions } from './freezed.js';
 
 describe('freezed decorator', () => {
   it('is a valid class decorator that returns the class unchanged', () => {
@@ -17,19 +17,19 @@ describe('freezed decorator', () => {
     class Bar {
       value = 2;
     }
-    const meta = getFreezedMetadata(Bar);
+    const meta = getFreezedOptions(Bar);
     expect(meta).toEqual({ equality: 'shallow' });
   });
 
   it('returns undefined metadata for undecorated classes', () => {
     class Baz {}
-    expect(getFreezedMetadata(Baz)).toBeUndefined();
+    expect(getFreezedOptions(Baz)).toBeUndefined();
   });
 
   it('works with no arguments', () => {
     @freezed()
     class Qux {}
-    const meta = getFreezedMetadata(Qux);
+    const meta = getFreezedOptions(Qux);
     expect(meta).toEqual({});
   });
 

@@ -153,6 +153,27 @@ describe('emitFreezedFile', () => {
     expect(output).toContain('this.value = params.value;');
   });
 
+  it('strips | undefined from readonly type when hasDefault is true', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Counter',
+        generatedClassName: '$Counter',
+        hasFieldConfig: true,
+        properties: [
+          { name: 'name', type: 'string', optional: false, hasDefault: false },
+          { name: 'count', type: 'number | undefined', optional: true, hasDefault: true },
+        ],
+      },
+    ];
+
+    const output = emitFreezedFile(classes);
+    // Readonly should NOT have | undefined (default guarantees value)
+    expect(output).toContain('  readonly count!: number;');
+    expect(output).not.toContain('readonly count!: number | undefined');
+    // Params type keeps | undefined (it's optional input)
+    expect(output).toContain('  count?: number | undefined;');
+  });
+
   it('generates multiple classes in one file', () => {
     const classes: ParsedFreezedClass[] = [
       {
