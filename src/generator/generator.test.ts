@@ -86,4 +86,39 @@ describe('generate', () => {
       expect(content).toContain('export abstract class $Child');
     });
   });
+
+  it('generates deep copy proxy for nested @freezed types', async () => {
+    await withTempDir((dir) => {
+      const filePath = path.join(dir, 'company.ts');
+      fs.writeFileSync(filePath, `
+      import { freezed } from 'freezedts';
+
+      @freezed()
+      class Inner {
+        constructor(params: { value: string }) { }
+      }
+
+      @freezed()
+      class Outer {
+        constructor(params: { name: string; inner: Inner }) { }
+      }
+    `);
+
+      const result = generate([filePath]);
+      expect(result.filesWritten).toBe(1);
+
+      const output = fs.readFileSync(
+        path.join(dir, 'company.freezed.ts'),
+        'utf-8',
+      );
+
+      // Should contain the deep copy helper
+      expect(output).toContain('__freezedWith');
+      // Should contain getter, not method
+      expect(output).toContain('get with()');
+      expect(output).not.toContain('with(overrides:');
+      // inner property should use $Inner type (base class reference)
+      expect(output).toContain('inner: $Inner;');
+    });
+  });
 });
