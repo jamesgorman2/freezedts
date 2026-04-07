@@ -3,6 +3,8 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { parseFreezedClasses } from './parser.js';
 import { emitFreezedFile } from './emitter.js';
+import { resolveClassOptions } from './config.js';
+import type { ResolvedConfig } from './config.js';
 
 export interface GenerateResult {
   filesWritten: number;
@@ -10,11 +12,15 @@ export interface GenerateResult {
   warnings: string[];
 }
 
-export function generate(filePaths: string[]): GenerateResult {
+const DEFAULT_CONFIG: ResolvedConfig = { format: false, copyWith: true, equal: true };
+
+export function generate(filePaths: string[], config?: ResolvedConfig): GenerateResult {
   const project = new Project({
     skipAddingFilesFromTsConfig: true,
     compilerOptions: { strict: true },
   });
+
+  const resolvedConfig = config ?? DEFAULT_CONFIG;
 
   let filesWritten = 0;
   const errors: string[] = [];
@@ -50,10 +56,23 @@ export function generate(filePaths: string[]): GenerateResult {
     }
   }
 
-  // Phase 3: Emit and write
+  // Phase 3: Resolve generation options — merge per-class with config defaults
+  for (const { classes } of parsed.values()) {
+    for (const cls of classes) {
+      const resolved = resolveClassOptions(cls, resolvedConfig);
+      cls.copyWith = resolved.copyWith;
+      cls.equal = resolved.equal;
+    }
+  }
+
+  // Phase 4: Emit and write
   for (const [filePath, { absolutePath, classes }] of parsed) {
     try {
-      const output = emitFreezedFile(classes);
+      let output = emitFreezedFile(classes);
+
+      if (resolvedConfig.format) {
+        output = formatOutput(output);
+      }
       const outputPath = absolutePath.replace(/\.ts$/, '.freezed.ts');
       fs.writeFileSync(outputPath, output, 'utf-8');
       filesWritten++;
@@ -63,4 +82,11 @@ export function generate(filePaths: string[]): GenerateResult {
   }
 
   return { filesWritten, errors, warnings };
+}
+
+function formatOutput(code: string): string {
+  const formatProject = new Project({ useInMemoryFileSystem: true });
+  const file = formatProject.createSourceFile('format.ts', code);
+  file.formatText();
+  return file.getFullText();
 }

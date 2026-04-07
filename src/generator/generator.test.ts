@@ -169,4 +169,153 @@ describe('generate', () => {
       expect(result.warnings[0]).toContain('Invalid');
     });
   });
+
+  it('omits with() when config has copyWith: false', async () => {
+    await withTempDir((dir) => {
+      const sourceFile = path.join(dir, 'person.ts');
+      fs.writeFileSync(
+        sourceFile,
+        `
+        import { freezed } from 'freezedts';
+
+        @freezed()
+        class Person {
+          constructor(params: { name: string }) {}
+        }
+        `,
+      );
+
+      const result = generate([sourceFile], { format: false, copyWith: false, equal: true });
+      expect(result.filesWritten).toBe(1);
+
+      const content = fs.readFileSync(path.join(dir, 'person.freezed.ts'), 'utf-8');
+      expect(content).not.toContain('get with()');
+      expect(content).not.toContain('PersonWith<');
+      expect(content).toContain('equals(other: unknown)');
+    });
+  });
+
+  it('omits equals() when config has equal: false', async () => {
+    await withTempDir((dir) => {
+      const sourceFile = path.join(dir, 'person.ts');
+      fs.writeFileSync(
+        sourceFile,
+        `
+        import { freezed } from 'freezedts';
+
+        @freezed()
+        class Person {
+          constructor(params: { name: string }) {}
+        }
+        `,
+      );
+
+      const result = generate([sourceFile], { format: false, copyWith: true, equal: false });
+      expect(result.filesWritten).toBe(1);
+
+      const content = fs.readFileSync(path.join(dir, 'person.freezed.ts'), 'utf-8');
+      expect(content).toContain('get with()');
+      expect(content).not.toContain('equals(other: unknown)');
+    });
+  });
+
+  it('per-class copyWith: true overrides config copyWith: false', async () => {
+    await withTempDir((dir) => {
+      const sourceFile = path.join(dir, 'person.ts');
+      fs.writeFileSync(
+        sourceFile,
+        `
+        import { freezed } from 'freezedts';
+
+        @freezed({ copyWith: true })
+        class Person {
+          constructor(params: { name: string }) {}
+        }
+        `,
+      );
+
+      const result = generate([sourceFile], { format: false, copyWith: false, equal: true });
+      expect(result.filesWritten).toBe(1);
+
+      const content = fs.readFileSync(path.join(dir, 'person.freezed.ts'), 'utf-8');
+      expect(content).toContain('get with()');
+      expect(content).toContain('PersonWith<Self>');
+    });
+  });
+
+  it('per-class equal: false overrides config equal: true', async () => {
+    await withTempDir((dir) => {
+      const sourceFile = path.join(dir, 'person.ts');
+      fs.writeFileSync(
+        sourceFile,
+        `
+        import { freezed } from 'freezedts';
+
+        @freezed({ equal: false })
+        class Person {
+          constructor(params: { name: string }) {}
+        }
+        `,
+      );
+
+      const result = generate([sourceFile], { format: false, copyWith: true, equal: true });
+      expect(result.filesWritten).toBe(1);
+
+      const content = fs.readFileSync(path.join(dir, 'person.freezed.ts'), 'utf-8');
+      expect(content).not.toContain('equals(other: unknown)');
+    });
+  });
+
+  it('formats output when format is true', async () => {
+    await withTempDir((dir) => {
+      const sourceFile = path.join(dir, 'person.ts');
+      fs.writeFileSync(
+        sourceFile,
+        `
+        import { freezed } from 'freezedts';
+
+        @freezed()
+        class Person {
+          constructor(params: { name: string }) {}
+        }
+        `,
+      );
+
+      const unformatted = generate([sourceFile], { format: false, copyWith: true, equal: true });
+      const unformattedContent = fs.readFileSync(path.join(dir, 'person.freezed.ts'), 'utf-8');
+
+      const formatted = generate([sourceFile], { format: true, copyWith: true, equal: true });
+      const formattedContent = fs.readFileSync(path.join(dir, 'person.freezed.ts'), 'utf-8');
+
+      // Formatted output should differ from unformatted (indentation/spacing changes)
+      expect(formattedContent).not.toEqual(unformattedContent);
+      // But should contain the same logical content
+      expect(formattedContent).toContain('export abstract class $Person');
+      expect(formattedContent).toContain('readonly name!: string');
+    });
+  });
+
+  it('uses default config (all enabled, no format) when config is omitted', async () => {
+    await withTempDir((dir) => {
+      const sourceFile = path.join(dir, 'person.ts');
+      fs.writeFileSync(
+        sourceFile,
+        `
+        import { freezed } from 'freezedts';
+
+        @freezed()
+        class Person {
+          constructor(params: { name: string }) {}
+        }
+        `,
+      );
+
+      const result = generate([sourceFile]);
+      expect(result.filesWritten).toBe(1);
+
+      const content = fs.readFileSync(path.join(dir, 'person.freezed.ts'), 'utf-8');
+      expect(content).toContain('get with()');
+      expect(content).toContain('equals(other: unknown)');
+    });
+  });
 });
