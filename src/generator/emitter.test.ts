@@ -47,7 +47,7 @@ describe('emitFreezedFile', () => {
     expect(output).toContain('  readonly lastName!: string;');
     expect(output).toContain('  readonly age!: number;');
     expect(output).toContain('  constructor(params: PersonParams) {');
-    expect(output).toContain('    this.firstName = params.firstName;');
+    expect(output).toContain('    this.firstName = __freezedDeepFreeze(params.firstName);');
     expect(output).toContain('    Object.freeze(this);');
   });
 
@@ -196,8 +196,8 @@ describe('emitFreezedFile', () => {
     expect(output).toContain('const resolved = { ...params } as Required<CounterParams>;');
     expect(output).toContain("if ('default' in config");
     expect(output).toContain('config.assert');
-    expect(output).toContain('this.name = resolved.name;');
-    expect(output).toContain('this.count = resolved.count;');
+    expect(output).toContain('this.name = __freezedDeepFreeze(resolved.name);');
+    expect(output).toContain('this.count = __freezedDeepFreeze(resolved.count);');
   });
 
   it('omits processing block when hasFieldConfig is false', () => {
@@ -215,7 +215,7 @@ describe('emitFreezedFile', () => {
 
     const output = emitFreezedFile(classes);
     expect(output).not.toContain('resolved');
-    expect(output).toContain('this.value = params.value;');
+    expect(output).toContain('this.value = __freezedDeepFreeze(params.value);');
   });
 
   it('strips | undefined from readonly type when hasDefault is true', () => {
@@ -404,5 +404,57 @@ describe('emitFreezedFile', () => {
     const output = emitFreezedFile(classes);
     expect(output).toContain('toString(): string');
     expect(output).toContain('`${this.constructor.name}()`');
+  });
+
+  it('generates __freezedDeepFreeze helper', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Team',
+        generatedClassName: '$Team',
+        hasFieldConfig: false,
+        equalityMode: 'deep',
+        properties: [
+          { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'members', type: 'string[]', optional: false, hasDefault: false, isFreezed: false },
+        ],
+      },
+    ];
+    const output = emitFreezedFile(classes);
+    expect(output).toContain('const __freezedDeepFreeze');
+    expect(output).toContain('Object.freeze');
+  });
+
+  it('calls __freezedDeepFreeze on each property before Object.freeze(this)', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Team',
+        generatedClassName: '$Team',
+        hasFieldConfig: false,
+        equalityMode: 'deep',
+        properties: [
+          { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'members', type: 'string[]', optional: false, hasDefault: false, isFreezed: false },
+        ],
+      },
+    ];
+    const output = emitFreezedFile(classes);
+    expect(output).toContain('this.name = __freezedDeepFreeze(params.name)');
+    expect(output).toContain('this.members = __freezedDeepFreeze(params.members)');
+  });
+
+  it('uses __freezedDeepFreeze with resolved params when hasFieldConfig', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Config',
+        generatedClassName: '$Config',
+        hasFieldConfig: true,
+        equalityMode: 'deep',
+        properties: [
+          { name: 'items', type: 'string[]', optional: false, hasDefault: false, isFreezed: false },
+        ],
+      },
+    ];
+    const output = emitFreezedFile(classes);
+    expect(output).toContain('this.items = __freezedDeepFreeze(resolved.items)');
   });
 });
