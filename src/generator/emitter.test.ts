@@ -457,4 +457,95 @@ describe('emitFreezedFile', () => {
     const output = emitFreezedFile(classes);
     expect(output).toContain('this.items = __freezedDeepFreeze(resolved.items)');
   });
+
+  it('omits WithType, with getter, and __freezedWith helper when copyWith is false', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Person',
+        generatedClassName: '$Person',
+        hasFieldConfig: false,
+        equalityMode: 'deep',
+        copyWith: false,
+        properties: [
+          { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+        ],
+      },
+    ];
+    const output = emitFreezedFile(classes);
+    expect(output).not.toContain('PersonWith<');
+    expect(output).not.toContain('get with()');
+    expect(output).not.toContain('__freezedWith');
+    // Should still have equals and toString
+    expect(output).toContain('equals(other: unknown): boolean');
+    expect(output).toContain('toString(): string');
+  });
+
+  it('includes WithType and with getter when copyWith is true', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Person',
+        generatedClassName: '$Person',
+        hasFieldConfig: false,
+        equalityMode: 'deep',
+        copyWith: true,
+        properties: [
+          { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+        ],
+      },
+    ];
+    const output = emitFreezedFile(classes);
+    expect(output).toContain('PersonWith<Self>');
+    expect(output).toContain('get with()');
+    expect(output).toContain('__freezedWith');
+  });
+
+  it('includes WithType and with getter when copyWith is undefined (default)', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Person',
+        generatedClassName: '$Person',
+        hasFieldConfig: false,
+        equalityMode: 'deep',
+        properties: [
+          { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+        ],
+      },
+    ];
+    const output = emitFreezedFile(classes);
+    expect(output).toContain('PersonWith<Self>');
+    expect(output).toContain('get with()');
+    expect(output).toContain('__freezedWith');
+  });
+
+  it('emits __freezedWith helper only when at least one class has copyWith enabled', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'NoCopy',
+        generatedClassName: '$NoCopy',
+        hasFieldConfig: false,
+        equalityMode: 'deep',
+        copyWith: false,
+        properties: [
+          { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+        ],
+      },
+      {
+        className: 'WithCopy',
+        generatedClassName: '$WithCopy',
+        hasFieldConfig: false,
+        equalityMode: 'deep',
+        copyWith: true,
+        properties: [
+          { name: 'value', type: 'number', optional: false, hasDefault: false, isFreezed: false },
+        ],
+      },
+    ];
+    const output = emitFreezedFile(classes);
+    // Helper emitted because WithCopy needs it
+    expect(output).toContain('__freezedWith');
+    // NoCopy still has no with getter
+    expect(output).not.toContain('NoCopyWith<');
+    // WithCopy has with getter
+    expect(output).toContain('WithCopyWith<Self>');
+  });
 });
