@@ -634,6 +634,25 @@ describe('emitFreezedFile', () => {
     expect(output).toContain('toString(): string');
   });
 
+  it('generates equals() with correct indentation for multi-property deep comparison', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Pair',
+        generatedClassName: '$Pair',
+        hasFieldConfig: false,
+        equalityMode: 'deep',
+        properties: [
+          { name: 'a', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'b', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+        ],
+      },
+    ];
+    const output = emitFreezedFile(classes);
+    // Must NOT have extra leading spaces between "return" and the first comparison
+    expect(output).toContain('return __freezedDeepEqual(this.a, other.a)');
+    expect(output).not.toContain('return     __freezedDeepEqual');
+  });
+
   it('emits __freezedDeepEqual helper only when at least one class has equal enabled', () => {
     const classes: ParsedFreezedClass[] = [
       {

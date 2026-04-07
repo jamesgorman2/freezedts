@@ -206,17 +206,17 @@ function emitToStringMethod(cls: ParsedFreezedClass): string {
 function emitEqualsMethod(cls: ParsedFreezedClass): string {
   const comparisons = cls.properties.map((p) => {
     if (cls.equalityMode === 'deep') {
-      return `    __freezedDeepEqual(this.${p.name}, other.${p.name})`;
+      return `__freezedDeepEqual(this.${p.name}, other.${p.name})`;
     }
     if (p.isFreezed) {
-      return `    this.${p.name}.equals(other.${p.name})`;
+      return `this.${p.name}.equals(other.${p.name})`;
     }
-    return `    this.${p.name} === other.${p.name}`;
+    return `this.${p.name} === other.${p.name}`;
   });
 
   const returnExpr = comparisons.length === 0
     ? 'true'
-    : comparisons.join(' &&\n');
+    : comparisons.join(' &&\n      ');
 
   return `  equals(other: unknown): boolean {
     if (this === other) return true;
