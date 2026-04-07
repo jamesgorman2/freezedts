@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'bun:test';
-import { resolveSourceFiles, parseArgs } from './cli.js';
+import { resolveSourceFiles, parseArgs, filterChangedFiles } from './cli.js';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
@@ -76,5 +76,70 @@ describe('parseArgs', () => {
   it('parses both --watch and directory in any order', () => {
     expect(parseArgs(['node', 'cli.js', '--watch', 'src'])).toEqual({ watch: true, dir: 'src' });
     expect(parseArgs(['node', 'cli.js', 'src', '-w'])).toEqual({ watch: true, dir: 'src' });
+  });
+});
+
+describe('filterChangedFiles', () => {
+  it('includes files without a .freezed.ts counterpart', () => {
+    withTempDir((dir) => {
+      const file = path.join(dir, 'person.ts');
+      fs.writeFileSync(file, 'class Person {}');
+
+      const { changed, skipped } = filterChangedFiles([file]);
+      expect(changed).toEqual([file]);
+      expect(skipped).toBe(0);
+    });
+  });
+
+  it('skips files whose .freezed.ts is newer than source', () => {
+    withTempDir((dir) => {
+      const file = path.join(dir, 'person.ts');
+      const freezed = path.join(dir, 'person.freezed.ts');
+      const now = Date.now();
+      fs.writeFileSync(file, 'class Person {}');
+      fs.utimesSync(file, now / 1000, now / 1000);
+      fs.writeFileSync(freezed, '// generated');
+      fs.utimesSync(freezed, (now + 2000) / 1000, (now + 2000) / 1000);
+
+      const { changed, skipped } = filterChangedFiles([file]);
+      expect(changed).toEqual([]);
+      expect(skipped).toBe(1);
+    });
+  });
+
+  it('includes files whose source is newer than .freezed.ts', () => {
+    withTempDir((dir) => {
+      const file = path.join(dir, 'person.ts');
+      const freezed = path.join(dir, 'person.freezed.ts');
+      const now = Date.now();
+      fs.writeFileSync(freezed, '// generated');
+      fs.utimesSync(freezed, now / 1000, now / 1000);
+      fs.writeFileSync(file, 'class Person {}');
+      fs.utimesSync(file, (now + 2000) / 1000, (now + 2000) / 1000);
+
+      const { changed, skipped } = filterChangedFiles([file]);
+      expect(changed).toEqual([file]);
+      expect(skipped).toBe(0);
+    });
+  });
+
+  it('handles a mix of changed and unchanged files', () => {
+    withTempDir((dir) => {
+      const now = Date.now();
+
+      const changed1 = path.join(dir, 'changed.ts');
+      fs.writeFileSync(changed1, 'class A {}');
+
+      const unchanged = path.join(dir, 'unchanged.ts');
+      const unchangedGen = path.join(dir, 'unchanged.freezed.ts');
+      fs.writeFileSync(unchanged, 'class B {}');
+      fs.utimesSync(unchanged, now / 1000, now / 1000);
+      fs.writeFileSync(unchangedGen, '// generated');
+      fs.utimesSync(unchangedGen, (now + 2000) / 1000, (now + 2000) / 1000);
+
+      const result = filterChangedFiles([changed1, unchanged]);
+      expect(result.changed).toEqual([changed1]);
+      expect(result.skipped).toBe(1);
+    });
   });
 });

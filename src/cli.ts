@@ -36,6 +36,26 @@ export interface CliArgs {
   dir: string;
 }
 
+export function filterChangedFiles(files: string[]): { changed: string[]; skipped: number } {
+  const changed: string[] = [];
+  let skipped = 0;
+  for (const file of files) {
+    const outputPath = file.replace(/\.ts$/, '.freezed.ts');
+    try {
+      const sourceMtime = fs.statSync(file).mtimeMs;
+      const outputMtime = fs.statSync(outputPath).mtimeMs;
+      if (outputMtime >= sourceMtime) {
+        skipped++;
+        continue;
+      }
+    } catch {
+      // Output file doesn't exist — needs generation
+    }
+    changed.push(file);
+  }
+  return { changed, skipped };
+}
+
 export function parseArgs(argv: string[]): CliArgs {
   const args = argv.slice(2);
   let watch = false;
