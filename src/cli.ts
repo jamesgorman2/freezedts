@@ -31,6 +31,27 @@ export function resolveSourceFiles(dir: string): string[] {
   return results;
 }
 
+export interface CliArgs {
+  watch: boolean;
+  dir: string;
+}
+
+export function parseArgs(argv: string[]): CliArgs {
+  const args = argv.slice(2);
+  let watch = false;
+  let dir = '.';
+
+  for (const arg of args) {
+    if (arg === '--watch' || arg === '-w') {
+      watch = true;
+    } else if (!arg.startsWith('-')) {
+      dir = arg;
+    }
+  }
+
+  return { watch, dir };
+}
+
 function main() {
   const targetDir = process.argv[2] || '.';
   const resolvedDir = path.resolve(targetDir);

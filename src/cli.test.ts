@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'bun:test';
-import { resolveSourceFiles } from './cli.js';
+import { resolveSourceFiles, parseArgs } from './cli.js';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
@@ -53,5 +53,28 @@ describe('resolveSourceFiles', () => {
       const names = files.map((f) => path.basename(f));
       expect(names).toEqual(['src.ts']);
     });
+  });
+});
+
+describe('parseArgs', () => {
+  it('defaults to no watch and current directory', () => {
+    expect(parseArgs(['node', 'cli.js'])).toEqual({ watch: false, dir: '.' });
+  });
+
+  it('parses --watch flag', () => {
+    expect(parseArgs(['node', 'cli.js', '--watch'])).toEqual({ watch: true, dir: '.' });
+  });
+
+  it('parses -w shorthand', () => {
+    expect(parseArgs(['node', 'cli.js', '-w'])).toEqual({ watch: true, dir: '.' });
+  });
+
+  it('parses positional directory argument', () => {
+    expect(parseArgs(['node', 'cli.js', 'src'])).toEqual({ watch: false, dir: 'src' });
+  });
+
+  it('parses both --watch and directory in any order', () => {
+    expect(parseArgs(['node', 'cli.js', '--watch', 'src'])).toEqual({ watch: true, dir: 'src' });
+    expect(parseArgs(['node', 'cli.js', 'src', '-w'])).toEqual({ watch: true, dir: 'src' });
   });
 });
