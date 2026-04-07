@@ -141,7 +141,7 @@ function emitParamsType(cls: ParsedFreezedClass): string {
 function emitWithType(cls: ParsedFreezedClass): string {
   const freezedProps = cls.properties.filter(p => p.isFreezed);
   const members = freezedProps
-    .map(p => `  ${p.name}: ${p.type}With<Self>;`)
+    .map(p => `  ${p.name}: ${p.type.replace(/\s*\|\s*undefined$/, '').trim()}With<Self>;`)
     .join('\n');
   const callSig = `  (overrides: Partial<${cls.className}Params>): Self;`;
   if (freezedProps.length === 0) {
@@ -229,6 +229,9 @@ function emitEqualsMethod(cls: ParsedFreezedClass): string {
       return `__freezedDeepEqual(this.${p.name}, other.${p.name})`;
     }
     if (p.isFreezed) {
+      if (p.optional) {
+        return `(this.${p.name} === other.${p.name} || (this.${p.name} != null && other.${p.name} != null && this.${p.name}.equals(other.${p.name})))`;
+      }
       return `this.${p.name}.equals(other.${p.name})`;
     }
     return `this.${p.name} === other.${p.name}`;

@@ -686,6 +686,34 @@ describe('emitFreezedFile', () => {
     expect(output).toContain('Number.isNaN');
   });
 
+  it('generates null-safe equals() for optional @freezed properties in shallow mode', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Inner',
+        generatedClassName: '$Inner',
+        hasFieldConfig: false,
+        equalityMode: 'deep',
+        properties: [
+          { name: 'value', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+        ],
+      },
+      {
+        className: 'Outer',
+        generatedClassName: '$Outer',
+        hasFieldConfig: false,
+        equalityMode: 'shallow',
+        properties: [
+          { name: 'inner', type: 'Inner', optional: true, hasDefault: false, isFreezed: true },
+        ],
+      },
+    ];
+    const output = emitFreezedFile(classes);
+    // Must not call .equals() directly on a potentially null property
+    expect(output).not.toMatch(/return\s+this\.inner\.equals\(other\.inner\)/);
+    // Should include null guard
+    expect(output).toContain('this.inner != null');
+  });
+
   it('emits __freezedDeepEqual helper only when at least one class has equal enabled', () => {
     const classes: ParsedFreezedClass[] = [
       {

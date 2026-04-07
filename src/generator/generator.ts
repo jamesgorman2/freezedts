@@ -49,7 +49,8 @@ export function generate(filePaths: string[], config?: ResolvedConfig): Generate
     const classNames = new Set(classes.map(c => c.className));
     for (const cls of classes) {
       for (const prop of cls.properties) {
-        prop.isFreezed = classNames.has(prop.type);
+        const baseType = prop.type.replace(/\s*\|\s*undefined$/, '').trim();
+        prop.isFreezed = classNames.has(baseType);
       }
     }
   }
