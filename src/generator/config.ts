@@ -31,7 +31,12 @@ export function loadConfig(configPath: string): ResolvedConfig {
     return { ...DEFAULTS };
   }
 
-  const parsed = parseYaml(raw) as FreezedConfigFile | null;
+  let parsed: FreezedConfigFile | null;
+  try {
+    parsed = parseYaml(raw) as FreezedConfigFile | null;
+  } catch {
+    throw new Error(`freezedts: invalid YAML in config file: ${configPath}`);
+  }
   const options = parsed?.freezed?.options;
 
   return {

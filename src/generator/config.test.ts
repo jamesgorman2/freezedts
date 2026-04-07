@@ -106,6 +106,15 @@ describe('loadConfig', () => {
       });
     });
   });
+
+  it('throws a clear error for invalid YAML', async () => {
+    await withTempDir((dir) => {
+      const configPath = path.join(dir, 'freezedts.config.yaml');
+      fs.writeFileSync(configPath, '{{{{invalid yaml content: [[[');
+
+      expect(() => loadConfig(configPath)).toThrow('invalid YAML');
+    });
+  });
 });
 
 describe('resolveClassOptions', () => {
