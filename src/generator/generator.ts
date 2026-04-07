@@ -3,7 +3,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { parseFreezedClasses } from './parser.js';
 import { emitFreezedFile } from './emitter.js';
-import { resolveClassOptions } from './config.js';
+import { resolveClassOptions, DEFAULTS as DEFAULT_CONFIG } from './config.js';
 import type { ResolvedConfig } from './config.js';
 
 export interface GenerateResult {
@@ -11,8 +11,6 @@ export interface GenerateResult {
   errors: string[];
   warnings: string[];
 }
-
-const DEFAULT_CONFIG: ResolvedConfig = { format: false, copyWith: true, equal: true };
 
 export function generate(filePaths: string[], config?: ResolvedConfig): GenerateResult {
   const project = new Project({

@@ -17,7 +17,7 @@ interface FreezedConfigFile {
   };
 }
 
-const DEFAULTS: ResolvedConfig = {
+export const DEFAULTS: ResolvedConfig = {
   format: false,
   copyWith: true,
   equal: true,
