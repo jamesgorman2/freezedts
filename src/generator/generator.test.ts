@@ -318,4 +318,54 @@ describe('generate', () => {
       expect(content).toContain('equals(other: unknown)');
     });
   });
+
+  it('resolves isFreezed across files and generates imports', async () => {
+    await withTempDir((dir) => {
+      const innerFile = path.join(dir, 'inner.ts');
+      fs.writeFileSync(
+        innerFile,
+        `
+        import { freezed } from 'freezedts';
+
+        @freezed()
+        class Inner {
+          constructor(params: { value: string }) {}
+        }
+      `,
+      );
+
+      const outerFile = path.join(dir, 'outer.ts');
+      fs.writeFileSync(
+        outerFile,
+        `
+        import { freezed } from 'freezedts';
+        import { Inner } from './inner.js';
+
+        @freezed()
+        class Outer {
+          constructor(params: { name: string; inner: Inner }) {}
+        }
+      `,
+      );
+
+      const result = generate([innerFile, outerFile]);
+      expect(result.filesWritten).toBe(2);
+
+      const outerContent = fs.readFileSync(
+        path.join(dir, 'outer.freezed.ts'),
+        'utf-8',
+      );
+
+      // inner property should use $Inner type (cross-file resolution)
+      expect(outerContent).toContain('inner: $Inner;');
+      expect(outerContent).toContain('readonly inner!: $Inner;');
+
+      // With type should include nested inner member
+      expect(outerContent).toContain('inner: InnerWith<Self>;');
+
+      // Must import $Inner from the other generated file
+      expect(outerContent).toContain("from './inner.freezed.js'");
+      expect(outerContent).toContain('$Inner');
+    });
+  });
 });

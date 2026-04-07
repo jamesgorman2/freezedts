@@ -6,6 +6,7 @@ export interface ParsedProperty {
   optional: boolean;
   hasDefault: boolean;
   isFreezed: boolean;
+  importFrom?: string;
 }
 
 export interface ParsedFreezedClass {
