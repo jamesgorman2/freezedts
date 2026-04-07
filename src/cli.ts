@@ -3,6 +3,7 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { generate } from './generator/generator.js';
 import { createWatcher } from './generator/watcher.js';
+import { loadConfig } from './generator/config.js';
 
 const EXCLUDED_DIRS = new Set(['node_modules', 'dist', '.git']);
 
@@ -35,6 +36,7 @@ export function resolveSourceFiles(dir: string): string[] {
 export interface CliArgs {
   watch: boolean;
   dir: string;
+  config?: string;
 }
 
 export function filterChangedFiles(files: string[]): { changed: string[]; skipped: number } {
@@ -61,28 +63,34 @@ export function parseArgs(argv: string[]): CliArgs {
   const args = argv.slice(2);
   let watch = false;
   let dir = '.';
+  let config: string | undefined;
 
-  for (const arg of args) {
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
     if (arg === '--watch' || arg === '-w') {
       watch = true;
+    } else if ((arg === '--config' || arg === '-c') && i + 1 < args.length) {
+      config = args[++i];
     } else if (!arg.startsWith('-')) {
       dir = arg;
     }
   }
 
-  return { watch, dir };
+  return { watch, dir, config };
 }
 
 function main() {
   const args = parseArgs(process.argv);
   const resolvedDir = path.resolve(args.dir);
+  const configPath = args.config ?? path.join(resolvedDir, 'freezedts.config.yaml');
+  const config = loadConfig(configPath);
 
   console.log(`freezedts: scanning ${resolvedDir}`);
   const allFiles = resolveSourceFiles(resolvedDir);
   console.log(`freezedts: found ${allFiles.length} source file(s)`);
 
   const { changed, skipped } = filterChangedFiles(allFiles);
-  const result = generate(changed);
+  const result = generate(changed, config);
 
   if (skipped > 0) {
     console.log(`freezedts: generated ${result.filesWritten} .freezed.ts file(s), ${skipped} unchanged`);
@@ -106,7 +114,7 @@ function main() {
       dir: resolvedDir,
       onChange: (changedFiles) => {
         const timestamp = new Date().toLocaleTimeString();
-        const watchResult = generate(changedFiles);
+        const watchResult = generate(changedFiles, config);
         if (watchResult.filesWritten > 0) {
           for (const f of changedFiles) {
             const rel = path.relative(resolvedDir, f);

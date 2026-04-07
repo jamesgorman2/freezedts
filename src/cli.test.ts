@@ -58,24 +58,56 @@ describe('resolveSourceFiles', () => {
 
 describe('parseArgs', () => {
   it('defaults to no watch and current directory', () => {
-    expect(parseArgs(['node', 'cli.js'])).toEqual({ watch: false, dir: '.' });
+    expect(parseArgs(['node', 'cli.js'])).toEqual({ watch: false, dir: '.', config: undefined });
   });
 
   it('parses --watch flag', () => {
-    expect(parseArgs(['node', 'cli.js', '--watch'])).toEqual({ watch: true, dir: '.' });
+    expect(parseArgs(['node', 'cli.js', '--watch'])).toEqual({ watch: true, dir: '.', config: undefined });
   });
 
   it('parses -w shorthand', () => {
-    expect(parseArgs(['node', 'cli.js', '-w'])).toEqual({ watch: true, dir: '.' });
+    expect(parseArgs(['node', 'cli.js', '-w'])).toEqual({ watch: true, dir: '.', config: undefined });
   });
 
   it('parses positional directory argument', () => {
-    expect(parseArgs(['node', 'cli.js', 'src'])).toEqual({ watch: false, dir: 'src' });
+    expect(parseArgs(['node', 'cli.js', 'src'])).toEqual({ watch: false, dir: 'src', config: undefined });
   });
 
   it('parses both --watch and directory in any order', () => {
-    expect(parseArgs(['node', 'cli.js', '--watch', 'src'])).toEqual({ watch: true, dir: 'src' });
-    expect(parseArgs(['node', 'cli.js', 'src', '-w'])).toEqual({ watch: true, dir: 'src' });
+    expect(parseArgs(['node', 'cli.js', '--watch', 'src'])).toEqual({ watch: true, dir: 'src', config: undefined });
+    expect(parseArgs(['node', 'cli.js', 'src', '-w'])).toEqual({ watch: true, dir: 'src', config: undefined });
+  });
+
+  it('parses --config flag with path', () => {
+    expect(parseArgs(['node', 'cli.js', '--config', 'custom.yaml'])).toEqual({
+      watch: false,
+      dir: '.',
+      config: 'custom.yaml',
+    });
+  });
+
+  it('parses -c shorthand for config', () => {
+    expect(parseArgs(['node', 'cli.js', '-c', 'my.yaml'])).toEqual({
+      watch: false,
+      dir: '.',
+      config: 'my.yaml',
+    });
+  });
+
+  it('parses --config with --watch and directory', () => {
+    expect(parseArgs(['node', 'cli.js', '--watch', '--config', 'cfg.yaml', 'src'])).toEqual({
+      watch: true,
+      dir: 'src',
+      config: 'cfg.yaml',
+    });
+  });
+
+  it('config is undefined when not specified', () => {
+    expect(parseArgs(['node', 'cli.js'])).toEqual({
+      watch: false,
+      dir: '.',
+      config: undefined,
+    });
   });
 });
 
