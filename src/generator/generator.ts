@@ -82,8 +82,11 @@ export function generate(filePaths: string[], config?: ResolvedConfig): Generate
   return { filesWritten, errors, warnings };
 }
 
+const formatProject = new Project({ useInMemoryFileSystem: true });
+
 function formatOutput(code: string): string {
-  const formatProject = new Project({ useInMemoryFileSystem: true });
+  const existing = formatProject.getSourceFile('format.ts');
+  if (existing) formatProject.removeSourceFile(existing);
   const file = formatProject.createSourceFile('format.ts', code);
   file.formatText();
   return file.getFullText();
