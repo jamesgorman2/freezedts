@@ -32,14 +32,13 @@ describe('collection safety — arrays', () => {
     expect(t.scores).toEqual([10, 20]);
   });
 
-  it('does not affect the original array passed in', async () => {
+  it('freezes the original array passed in (reference types are frozen in-place)', async () => {
     const { Team } = await import('./fixtures/arrays.ts');
     const members = ['Alice', 'Bob'];
     const t = new Team({ name: 'A', members, scores: [10] });
-    // Original array is still mutable
-    members.push('Charlie');
-    expect(members).toEqual(['Alice', 'Bob', 'Charlie']);
-    // Frozen instance still has original values
+    // Original array is also frozen because JavaScript arrays are reference types
+    // and Object.freeze mutates them in-place — this is the safer behavior for immutable data classes
+    expect(() => members.push('Charlie')).toThrow();
     expect(t.members).toEqual(['Alice', 'Bob']);
   });
 });

@@ -72,10 +72,20 @@ function emitDeepFreezeHelper(): string {
     return value;
   }
   if (value instanceof Map) {
+    const _throw = () => { throw new TypeError('Cannot mutate a frozen Map'); };
+    value.set = _throw as any;
+    value.delete = _throw as any;
+    value.clear = _throw as any;
+    value.forEach((v) => __freezedDeepFreeze(v));
     Object.freeze(value);
     return value;
   }
   if (value instanceof Set) {
+    const _throw = () => { throw new TypeError('Cannot mutate a frozen Set'); };
+    value.add = _throw as any;
+    value.delete = _throw as any;
+    value.clear = _throw as any;
+    value.forEach((v) => __freezedDeepFreeze(v));
     Object.freeze(value);
     return value;
   }
