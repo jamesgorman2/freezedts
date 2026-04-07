@@ -60,6 +60,18 @@ function emitDeepEqualHelper(): string {
     if (!Array.isArray(b) || a.length !== b.length) return false;
     return a.every((v, i) => __freezedDeepEqual(v, (b as any[])[i]));
   }
+  if (a instanceof Map) {
+    if (!(b instanceof Map) || a.size !== b.size) return false;
+    for (const [k, v] of a) {
+      if (!b.has(k) || !__freezedDeepEqual(v, b.get(k))) return false;
+    }
+    return true;
+  }
+  if (a instanceof Set) {
+    if (!(b instanceof Set) || a.size !== b.size) return false;
+    for (const v of a) if (!b.has(v)) return false;
+    return true;
+  }
   const keysA = Object.keys(a);
   const keysB = Object.keys(b as object);
   if (keysA.length !== keysB.length) return false;

@@ -653,6 +653,23 @@ describe('emitFreezedFile', () => {
     expect(output).not.toContain('return     __freezedDeepEqual');
   });
 
+  it('generates __freezedDeepEqual with Map and Set support', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Simple',
+        generatedClassName: '$Simple',
+        hasFieldConfig: false,
+        equalityMode: 'deep',
+        properties: [
+          { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+        ],
+      },
+    ];
+    const output = emitFreezedFile(classes);
+    expect(output).toContain('instanceof Map');
+    expect(output).toContain('instanceof Set');
+  });
+
   it('emits __freezedDeepEqual helper only when at least one class has equal enabled', () => {
     const classes: ParsedFreezedClass[] = [
       {
