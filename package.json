@@ -37,7 +37,8 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "ts-morph": "^27.0.2"
+    "ts-morph": "^27.0.2",
+    "yaml": "^2.8.3"
   },
   "devDependencies": {
     "@types/bun": "latest",
