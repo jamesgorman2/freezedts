@@ -52,6 +52,7 @@ function emitDeepEqualHelper(): string {
   if (a === b) return true;
   if (a == null || b == null) return a === b;
   if (typeof a !== typeof b) return false;
+  if (typeof a === 'number') return Number.isNaN(a) && Number.isNaN(b as number);
   if (typeof a !== 'object') return false;
   if (typeof (a as any).equals === 'function' && a.constructor === b.constructor) {
     return (a as any).equals(b);

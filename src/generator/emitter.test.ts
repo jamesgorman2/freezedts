@@ -670,6 +670,22 @@ describe('emitFreezedFile', () => {
     expect(output).toContain('instanceof Set');
   });
 
+  it('generates __freezedDeepEqual with NaN handling', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Simple',
+        generatedClassName: '$Simple',
+        hasFieldConfig: false,
+        equalityMode: 'deep',
+        properties: [
+          { name: 'value', type: 'number', optional: false, hasDefault: false, isFreezed: false },
+        ],
+      },
+    ];
+    const output = emitFreezedFile(classes);
+    expect(output).toContain('Number.isNaN');
+  });
+
   it('emits __freezedDeepEqual helper only when at least one class has equal enabled', () => {
     const classes: ParsedFreezedClass[] = [
       {
