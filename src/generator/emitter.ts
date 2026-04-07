@@ -100,6 +100,8 @@ function emitDeepFreezeHelper(): string {
 };`;
 }
 
+const PRIMITIVE_TYPES = new Set(['string', 'number', 'boolean', 'bigint']);
+
 function emitClass(cls: ParsedFreezedClass): string {
   const paramsType = emitParamsType(cls);
   const parts = [paramsType];
@@ -151,7 +153,12 @@ function emitClassBody(cls: ParsedFreezedClass): string {
     : '';
 
   const assignments = cls.properties
-    .map((p) => `    this.${p.name} = __freezedDeepFreeze(${paramsVar}.${p.name});`)
+    .map((p) => {
+      if (PRIMITIVE_TYPES.has(p.type)) {
+        return `    this.${p.name} = ${paramsVar}.${p.name};`;
+      }
+      return `    this.${p.name} = __freezedDeepFreeze(${paramsVar}.${p.name});`;
+    })
     .join('\n');
 
   const methods: string[] = [];
