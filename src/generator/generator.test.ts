@@ -121,4 +121,52 @@ describe('generate', () => {
       expect(output).toContain('inner: $Inner;');
     });
   });
+
+  it('collects warnings for malformed @freezed classes', async () => {
+    await withTempDir((dir) => {
+      const sourceFile = path.join(dir, 'bad.ts');
+      fs.writeFileSync(
+        sourceFile,
+        `
+        import { freezed } from 'freezedts';
+
+        @freezed()
+        class NoConstructor {
+        }
+        `,
+      );
+
+      const result = generate([sourceFile]);
+      expect(result.filesWritten).toBe(0);
+      expect(result.warnings).toHaveLength(1);
+      expect(result.warnings[0]).toContain('NoConstructor');
+      expect(result.warnings[0]).toContain('no constructor');
+    });
+  });
+
+  it('generates valid classes and warns about invalid ones in the same file', async () => {
+    await withTempDir((dir) => {
+      const sourceFile = path.join(dir, 'mixed.ts');
+      fs.writeFileSync(
+        sourceFile,
+        `
+        import { freezed } from 'freezedts';
+
+        @freezed()
+        class Valid {
+          constructor(params: { name: string }) {}
+        }
+
+        @freezed()
+        class Invalid {
+        }
+        `,
+      );
+
+      const result = generate([sourceFile]);
+      expect(result.filesWritten).toBe(1);
+      expect(result.warnings).toHaveLength(1);
+      expect(result.warnings[0]).toContain('Invalid');
+    });
+  });
 });

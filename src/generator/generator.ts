@@ -7,6 +7,7 @@ import { emitFreezedFile } from './emitter.js';
 export interface GenerateResult {
   filesWritten: number;
   errors: string[];
+  warnings: string[];
 }
 
 export function generate(filePaths: string[]): GenerateResult {
@@ -17,15 +18,19 @@ export function generate(filePaths: string[]): GenerateResult {
 
   let filesWritten = 0;
   const errors: string[] = [];
+  const warnings: string[] = [];
 
   // Phase 1: Parse all files
-  const parsed = new Map<string, { absolutePath: string; classes: ReturnType<typeof parseFreezedClasses> }>();
+  const parsed = new Map<string, { absolutePath: string; classes: ReturnType<typeof parseFreezedClasses>['classes'] }>();
 
   for (const filePath of filePaths) {
     const absolutePath = path.resolve(filePath);
     const sourceFile = project.addSourceFileAtPath(absolutePath);
     try {
-      const classes = parseFreezedClasses(sourceFile);
+      const { classes, warnings: parseWarnings } = parseFreezedClasses(sourceFile);
+      for (const w of parseWarnings) {
+        warnings.push(`${filePath}:${w.line}: ${w.message}`);
+      }
       if (classes.length > 0) {
         parsed.set(filePath, { absolutePath, classes });
       }
@@ -57,5 +62,5 @@ export function generate(filePaths: string[]): GenerateResult {
     }
   }
 
-  return { filesWritten, errors };
+  return { filesWritten, errors, warnings };
 }
