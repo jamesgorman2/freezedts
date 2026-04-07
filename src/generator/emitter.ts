@@ -76,7 +76,7 @@ function emitDeepFreezeHelper(): string {
     value.set = _throw as any;
     value.delete = _throw as any;
     value.clear = _throw as any;
-    value.forEach((v) => __freezedDeepFreeze(v));
+    value.forEach((v, k) => { __freezedDeepFreeze(k); __freezedDeepFreeze(v); });
     Object.freeze(value);
     return value;
   }
