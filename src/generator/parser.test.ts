@@ -29,6 +29,7 @@ describe('parseFreezedClasses', () => {
         className: 'Person',
         generatedClassName: '$Person',
         hasFieldConfig: false,
+        equalityMode: 'deep',
         properties: [
           { name: 'firstName', type: 'string', optional: false, hasDefault: false, isFreezed: false },
           { name: 'lastName', type: 'string', optional: false, hasDefault: false, isFreezed: false },
@@ -173,5 +174,33 @@ describe('parseFreezedClasses', () => {
     const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
     expect(result[0].hasFieldConfig).toBe(false);
     expect(result[0].properties[0].hasDefault).toBe(false);
+  });
+
+  it('extracts equalityMode as shallow from @freezed decorator', () => {
+    const project = createTestProject(`
+      import { freezed } from 'freezedts';
+
+      @freezed({ equality: 'shallow' })
+      class Person {
+        constructor(params: { name: string }) {}
+      }
+    `);
+
+    const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
+    expect(result[0].equalityMode).toBe('shallow');
+  });
+
+  it('defaults equalityMode to deep when not specified', () => {
+    const project = createTestProject(`
+      import { freezed } from 'freezedts';
+
+      @freezed()
+      class Person {
+        constructor(params: { name: string }) {}
+      }
+    `);
+
+    const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
+    expect(result[0].equalityMode).toBe('deep');
   });
 });

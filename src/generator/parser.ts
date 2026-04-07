@@ -13,6 +13,7 @@ export interface ParsedFreezedClass {
   generatedClassName: string;
   properties: ParsedProperty[];
   hasFieldConfig: boolean;
+  equalityMode: 'deep' | 'shallow';
 }
 
 export function parseFreezedClasses(sourceFile: SourceFile): ParsedFreezedClass[] {
@@ -35,6 +36,7 @@ export function parseFreezedClasses(sourceFile: SourceFile): ParsedFreezedClass[
     if (!paramsParam) continue;
 
     const { hasFieldConfig, defaultFields } = extractFieldConfig(decorator);
+    const equalityMode = extractEqualityMode(decorator);
     const paramType = paramsParam.getType();
     const properties = extractProperties(paramType, defaultFields);
 
@@ -43,6 +45,7 @@ export function parseFreezedClasses(sourceFile: SourceFile): ParsedFreezedClass[
       generatedClassName: `$${className}`,
       properties,
       hasFieldConfig,
+      equalityMode,
     });
   }
 
@@ -75,6 +78,23 @@ function extractFieldConfig(decorator: Decorator): { hasFieldConfig: boolean; de
   }
 
   return { hasFieldConfig: true, defaultFields };
+}
+
+function extractEqualityMode(decorator: Decorator): 'deep' | 'shallow' {
+  const args = decorator.getArguments();
+  if (args.length === 0) return 'deep';
+
+  const optionsArg = args[0];
+  if (!Node.isObjectLiteralExpression(optionsArg)) return 'deep';
+
+  const equalityProp = optionsArg.getProperty('equality');
+  if (!equalityProp || !Node.isPropertyAssignment(equalityProp)) return 'deep';
+
+  const init = equalityProp.getInitializer();
+  if (!init) return 'deep';
+
+  const text = init.getText().replace(/['"]/g, '');
+  return text === 'shallow' ? 'shallow' : 'deep';
 }
 
 function extractProperties(type: Type, defaultFields: Set<string>): ParsedProperty[] {
