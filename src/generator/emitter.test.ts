@@ -9,6 +9,7 @@ describe('emitFreezedFile', () => {
         className: 'Person',
         generatedClassName: '$Person',
         hasFieldConfig: false,
+        equalityMode: 'deep',
         properties: [
           { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
         ],
@@ -27,6 +28,7 @@ describe('emitFreezedFile', () => {
         className: 'Person',
         generatedClassName: '$Person',
         hasFieldConfig: false,
+        equalityMode: 'deep',
         properties: [
           { name: 'firstName', type: 'string', optional: false, hasDefault: false, isFreezed: false },
           { name: 'lastName', type: 'string', optional: false, hasDefault: false, isFreezed: false },
@@ -55,6 +57,7 @@ describe('emitFreezedFile', () => {
         className: 'Person',
         generatedClassName: '$Person',
         hasFieldConfig: false,
+        equalityMode: 'deep',
         properties: [
           { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
           { name: 'age', type: 'number', optional: false, hasDefault: false, isFreezed: false },
@@ -79,6 +82,7 @@ describe('emitFreezedFile', () => {
         className: 'Inner',
         generatedClassName: '$Inner',
         hasFieldConfig: false,
+        equalityMode: 'deep',
         properties: [
           { name: 'value', type: 'string', optional: false, hasDefault: false, isFreezed: false },
         ],
@@ -87,6 +91,7 @@ describe('emitFreezedFile', () => {
         className: 'Outer',
         generatedClassName: '$Outer',
         hasFieldConfig: false,
+        equalityMode: 'deep',
         properties: [
           { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
           { name: 'inner', type: 'Inner', optional: false, hasDefault: false, isFreezed: true },
@@ -109,6 +114,7 @@ describe('emitFreezedFile', () => {
         className: 'Inner',
         generatedClassName: '$Inner',
         hasFieldConfig: false,
+        equalityMode: 'deep',
         properties: [
           { name: 'value', type: 'string', optional: false, hasDefault: false, isFreezed: false },
         ],
@@ -117,6 +123,7 @@ describe('emitFreezedFile', () => {
         className: 'Outer',
         generatedClassName: '$Outer',
         hasFieldConfig: false,
+        equalityMode: 'deep',
         properties: [
           { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
           { name: 'inner', type: 'Inner', optional: false, hasDefault: false, isFreezed: true },
@@ -137,6 +144,7 @@ describe('emitFreezedFile', () => {
         className: 'Config',
         generatedClassName: '$Config',
         hasFieldConfig: false,
+        equalityMode: 'deep',
         properties: [
           { name: 'host', type: 'string', optional: false, hasDefault: false, isFreezed: false },
           { name: 'port', type: 'number', optional: true, hasDefault: false, isFreezed: false },
@@ -156,6 +164,7 @@ describe('emitFreezedFile', () => {
         className: 'Counter',
         generatedClassName: '$Counter',
         hasFieldConfig: true,
+        equalityMode: 'deep',
         properties: [
           { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
           { name: 'count', type: 'number', optional: false, hasDefault: true, isFreezed: false },
@@ -174,6 +183,7 @@ describe('emitFreezedFile', () => {
         className: 'Counter',
         generatedClassName: '$Counter',
         hasFieldConfig: true,
+        equalityMode: 'deep',
         properties: [
           { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
           { name: 'count', type: 'number', optional: false, hasDefault: true, isFreezed: false },
@@ -196,6 +206,7 @@ describe('emitFreezedFile', () => {
         className: 'Simple',
         generatedClassName: '$Simple',
         hasFieldConfig: false,
+        equalityMode: 'deep',
         properties: [
           { name: 'value', type: 'string', optional: false, hasDefault: false, isFreezed: false },
         ],
@@ -213,6 +224,7 @@ describe('emitFreezedFile', () => {
         className: 'Counter',
         generatedClassName: '$Counter',
         hasFieldConfig: true,
+        equalityMode: 'deep',
         properties: [
           { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
           { name: 'count', type: 'number | undefined', optional: true, hasDefault: true, isFreezed: false },
@@ -232,12 +244,14 @@ describe('emitFreezedFile', () => {
         className: 'Person',
         generatedClassName: '$Person',
         hasFieldConfig: false,
+        equalityMode: 'deep',
         properties: [{ name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false }],
       },
       {
         className: 'Child',
         generatedClassName: '$Child',
         hasFieldConfig: false,
+        equalityMode: 'deep',
         properties: [
           { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
           { name: 'parentName', type: 'string', optional: false, hasDefault: false, isFreezed: false },
@@ -252,5 +266,89 @@ describe('emitFreezedFile', () => {
     expect(output).toContain('export type ChildParams = {');
     expect(output).toContain('export type PersonWith<Self>');
     expect(output).toContain('export type ChildWith<Self>');
+  });
+
+  it('generates __freezedDeepEqual helper', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Person',
+        generatedClassName: '$Person',
+        hasFieldConfig: false,
+        equalityMode: 'deep',
+        properties: [
+          { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+        ],
+      },
+    ];
+    const output = emitFreezedFile(classes);
+    expect(output).toContain('__freezedDeepEqual');
+  });
+
+  it('generates equals() method with deep comparison', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Person',
+        generatedClassName: '$Person',
+        hasFieldConfig: false,
+        equalityMode: 'deep',
+        properties: [
+          { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'age', type: 'number', optional: false, hasDefault: false, isFreezed: false },
+        ],
+      },
+    ];
+    const output = emitFreezedFile(classes);
+    expect(output).toContain('equals(other: unknown): boolean');
+    expect(output).toContain('other instanceof $Person');
+    expect(output).toContain('__freezedDeepEqual(this.name, other.name)');
+    expect(output).toContain('__freezedDeepEqual(this.age, other.age)');
+  });
+
+  it('generates equals() with === for shallow mode', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Config',
+        generatedClassName: '$Config',
+        hasFieldConfig: false,
+        equalityMode: 'shallow',
+        properties: [
+          { name: 'host', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'port', type: 'number', optional: false, hasDefault: false, isFreezed: false },
+        ],
+      },
+    ];
+    const output = emitFreezedFile(classes);
+    expect(output).toContain('equals(other: unknown): boolean');
+    expect(output).toContain('other instanceof $Config');
+    expect(output).toContain('this.host === other.host');
+    expect(output).toContain('this.port === other.port');
+    expect(output).not.toContain('__freezedDeepEqual(this.host');
+  });
+
+  it('generates equals() using .equals() for @freezed properties in shallow mode', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Inner',
+        generatedClassName: '$Inner',
+        hasFieldConfig: false,
+        equalityMode: 'deep',
+        properties: [
+          { name: 'value', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+        ],
+      },
+      {
+        className: 'Outer',
+        generatedClassName: '$Outer',
+        hasFieldConfig: false,
+        equalityMode: 'shallow',
+        properties: [
+          { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'inner', type: 'Inner', optional: false, hasDefault: false, isFreezed: true },
+        ],
+      },
+    ];
+    const output = emitFreezedFile(classes);
+    expect(output).toContain('this.inner.equals(other.inner)');
+    expect(output).toContain('this.name === other.name');
   });
 });
