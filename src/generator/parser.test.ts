@@ -324,4 +324,24 @@ describe('parseFreezedClasses', () => {
     const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
     expect(result.classes[0].copyWith).toBe(true);
   });
+
+  it('strips import() prefix from types referencing other files', () => {
+    const project = new Project({ useInMemoryFileSystem: true });
+    project.createSourceFile('inner.ts', 'export class Inner { value = ""; }');
+    project.createSourceFile(
+      'test.ts',
+      `
+      import { freezed } from 'freezedts';
+      import { Inner } from './inner';
+
+      @freezed()
+      class Container {
+        constructor(params: { items: Map<string, Inner> }) {}
+      }
+    `,
+    );
+
+    const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
+    expect(result.classes[0].properties[0].type).not.toContain('import(');
+  });
 });

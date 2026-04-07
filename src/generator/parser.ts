@@ -157,7 +157,7 @@ function extractProperties(type: Type, defaultFields: Set<string>): ParsedProper
     const isOptional = prop.isOptional();
 
     let typeText = propType?.getText() ?? 'unknown';
-    typeText = typeText.replace(/^import\(.*?\)\./g, '');
+    typeText = typeText.replace(/import\(.*?\)\./g, '');
 
     return {
       name: prop.getName(),
