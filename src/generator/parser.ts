@@ -16,9 +16,20 @@ export interface ParsedFreezedClass {
   equalityMode: 'deep' | 'shallow';
 }
 
-export function parseFreezedClasses(sourceFile: SourceFile): ParsedFreezedClass[] {
+export interface ParseWarning {
+  message: string;
+  line: number;
+}
+
+export interface ParseResult {
+  classes: ParsedFreezedClass[];
+  warnings: ParseWarning[];
+}
+
+export function parseFreezedClasses(sourceFile: SourceFile): ParseResult {
   const classes = sourceFile.getClasses();
   const results: ParsedFreezedClass[] = [];
+  const warnings: ParseWarning[] = [];
 
   for (const cls of classes) {
     const decorator = cls.getDecorators().find(
@@ -30,10 +41,22 @@ export function parseFreezedClasses(sourceFile: SourceFile): ParsedFreezedClass[
     if (!className) continue;
 
     const constructor = cls.getConstructors()[0];
-    if (!constructor) continue;
+    if (!constructor) {
+      warnings.push({
+        message: `@freezed class '${className}' has no constructor`,
+        line: cls.getStartLineNumber(),
+      });
+      continue;
+    }
 
     const paramsParam = constructor.getParameters()[0];
-    if (!paramsParam) continue;
+    if (!paramsParam) {
+      warnings.push({
+        message: `@freezed class '${className}' constructor has no parameters`,
+        line: cls.getStartLineNumber(),
+      });
+      continue;
+    }
 
     const { hasFieldConfig, defaultFields } = extractFieldConfig(decorator);
     const equalityMode = extractEqualityMode(decorator);
@@ -49,7 +72,7 @@ export function parseFreezedClasses(sourceFile: SourceFile): ParsedFreezedClass[
     });
   }
 
-  return results;
+  return { classes: results, warnings };
 }
 
 function extractFieldConfig(decorator: Decorator): { hasFieldConfig: boolean; defaultFields: Set<string> } {

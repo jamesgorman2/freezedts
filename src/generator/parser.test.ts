@@ -24,7 +24,7 @@ describe('parseFreezedClasses', () => {
     `);
 
     const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
-    expect(result).toEqual([
+    expect(result.classes).toEqual([
       {
         className: 'Person',
         generatedClassName: '$Person',
@@ -53,7 +53,7 @@ describe('parseFreezedClasses', () => {
     `);
 
     const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
-    expect(result[0].properties).toEqual([
+    expect(result.classes[0].properties).toEqual([
       { name: 'host', type: 'string', optional: false, hasDefault: false, isFreezed: false },
       { name: 'port', type: 'number', optional: true, hasDefault: false, isFreezed: false },
     ]);
@@ -75,9 +75,9 @@ describe('parseFreezedClasses', () => {
     `);
 
     const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
-    expect(result).toHaveLength(2);
-    expect(result[0].className).toBe('Person');
-    expect(result[1].className).toBe('Child');
+    expect(result.classes).toHaveLength(2);
+    expect(result.classes[0].className).toBe('Person');
+    expect(result.classes[1].className).toBe('Child');
   });
 
   it('ignores classes without @freezed decorator', () => {
@@ -88,7 +88,7 @@ describe('parseFreezedClasses', () => {
     `);
 
     const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
-    expect(result).toEqual([]);
+    expect(result.classes).toEqual([]);
   });
 
   it('handles array and complex types', () => {
@@ -106,7 +106,7 @@ describe('parseFreezedClasses', () => {
     `);
 
     const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
-    expect(result[0].properties).toEqual([
+    expect(result.classes[0].properties).toEqual([
       { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
       { name: 'members', type: 'string[]', optional: false, hasDefault: false, isFreezed: false },
       { name: 'metadata', type: 'Record<string, unknown>', optional: false, hasDefault: false, isFreezed: false },
@@ -131,7 +131,7 @@ describe('parseFreezedClasses', () => {
     `);
 
     const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
-    expect(result[0].hasFieldConfig).toBe(true);
+    expect(result.classes[0].hasFieldConfig).toBe(true);
   });
 
   it('sets hasDefault on properties with default config', () => {
@@ -154,7 +154,7 @@ describe('parseFreezedClasses', () => {
     `);
 
     const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
-    expect(result[0].properties).toEqual([
+    expect(result.classes[0].properties).toEqual([
       { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
       { name: 'age', type: 'number', optional: true, hasDefault: true, isFreezed: false },
       { name: 'email', type: 'string', optional: false, hasDefault: false, isFreezed: false },
@@ -172,8 +172,8 @@ describe('parseFreezedClasses', () => {
     `);
 
     const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
-    expect(result[0].hasFieldConfig).toBe(false);
-    expect(result[0].properties[0].hasDefault).toBe(false);
+    expect(result.classes[0].hasFieldConfig).toBe(false);
+    expect(result.classes[0].properties[0].hasDefault).toBe(false);
   });
 
   it('extracts equalityMode as shallow from @freezed decorator', () => {
@@ -187,7 +187,7 @@ describe('parseFreezedClasses', () => {
     `);
 
     const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
-    expect(result[0].equalityMode).toBe('shallow');
+    expect(result.classes[0].equalityMode).toBe('shallow');
   });
 
   it('defaults equalityMode to deep when not specified', () => {
@@ -201,6 +201,55 @@ describe('parseFreezedClasses', () => {
     `);
 
     const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
-    expect(result[0].equalityMode).toBe('deep');
+    expect(result.classes[0].equalityMode).toBe('deep');
+  });
+
+  it('returns warning for @freezed class with no constructor', () => {
+    const project = createTestProject(`
+      import { freezed } from 'freezedts';
+
+      @freezed()
+      class Empty {
+      }
+    `);
+
+    const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
+    expect(result.classes).toEqual([]);
+    expect(result.warnings).toHaveLength(1);
+    expect(result.warnings[0].message).toContain("'Empty'");
+    expect(result.warnings[0].message).toContain('no constructor');
+    expect(result.warnings[0].line).toBeGreaterThan(0);
+  });
+
+  it('returns warning for @freezed class with parameterless constructor', () => {
+    const project = createTestProject(`
+      import { freezed } from 'freezedts';
+
+      @freezed()
+      class NoParams {
+        constructor() {}
+      }
+    `);
+
+    const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
+    expect(result.classes).toEqual([]);
+    expect(result.warnings).toHaveLength(1);
+    expect(result.warnings[0].message).toContain("'NoParams'");
+    expect(result.warnings[0].message).toContain('no parameters');
+  });
+
+  it('returns empty warnings for valid classes', () => {
+    const project = createTestProject(`
+      import { freezed } from 'freezedts';
+
+      @freezed()
+      class Valid {
+        constructor(params: { name: string }) {}
+      }
+    `);
+
+    const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
+    expect(result.classes).toHaveLength(1);
+    expect(result.warnings).toEqual([]);
   });
 });
