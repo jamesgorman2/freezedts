@@ -351,4 +351,58 @@ describe('emitFreezedFile', () => {
     expect(output).toContain('this.inner.equals(other.inner)');
     expect(output).toContain('this.name === other.name');
   });
+
+  it('generates toString() method with all properties', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Person',
+        generatedClassName: '$Person',
+        hasFieldConfig: false,
+        equalityMode: 'deep',
+        properties: [
+          { name: 'firstName', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'lastName', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'age', type: 'number', optional: false, hasDefault: false, isFreezed: false },
+        ],
+      },
+    ];
+    const output = emitFreezedFile(classes);
+    expect(output).toContain('toString(): string');
+    expect(output).toContain('${this.constructor.name}');
+    expect(output).toContain('firstName: ${this.firstName}');
+    expect(output).toContain('lastName: ${this.lastName}');
+    expect(output).toContain('age: ${this.age}');
+  });
+
+  it('generates toString() for class with single property', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Tag',
+        generatedClassName: '$Tag',
+        hasFieldConfig: false,
+        equalityMode: 'deep',
+        properties: [
+          { name: 'value', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+        ],
+      },
+    ];
+    const output = emitFreezedFile(classes);
+    expect(output).toContain('toString(): string');
+    expect(output).toContain('value: ${this.value}');
+  });
+
+  it('generates toString() for class with no properties', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Empty',
+        generatedClassName: '$Empty',
+        hasFieldConfig: false,
+        equalityMode: 'deep',
+        properties: [],
+      },
+    ];
+    const output = emitFreezedFile(classes);
+    expect(output).toContain('toString(): string');
+    expect(output).toContain('`${this.constructor.name}()`');
+  });
 });

@@ -112,6 +112,7 @@ function emitClassBody(cls: ParsedFreezedClass): string {
 
   const withGetter = emitWithGetter(cls);
   const equalsMethod = emitEqualsMethod(cls);
+  const toStringMethod = emitToStringMethod(cls);
 
   return `export abstract class ${cls.generatedClassName} {
 ${readonlyFields}
@@ -124,6 +125,8 @@ ${fieldConfigBlock}${assignments}
 ${withGetter}
 
 ${equalsMethod}
+
+${toStringMethod}
 }`;
 }
 
@@ -147,6 +150,15 @@ function emitFieldConfigBlock(cls: ParsedFreezedClass): string {
 function emitWithGetter(cls: ParsedFreezedClass): string {
   return `  get with(): ${cls.className}With<this> {
     return __freezedWith(this);
+  }`;
+}
+
+function emitToStringMethod(cls: ParsedFreezedClass): string {
+  const parts = cls.properties
+    .map((p) => `${p.name}: \${this.${p.name}}`)
+    .join(', ');
+  return `  toString(): string {
+    return \`\${this.constructor.name}(${parts})\`;
   }`;
 }
 
