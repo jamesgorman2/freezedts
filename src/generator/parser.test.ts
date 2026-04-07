@@ -252,4 +252,76 @@ describe('parseFreezedClasses', () => {
     expect(result.classes).toHaveLength(1);
     expect(result.warnings).toEqual([]);
   });
+
+  it('extracts copyWith: false from @freezed decorator', () => {
+    const project = createTestProject(`
+      import { freezed } from 'freezedts';
+
+      @freezed({ copyWith: false })
+      class Person {
+        constructor(params: { name: string }) {}
+      }
+    `);
+
+    const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
+    expect(result.classes[0].copyWith).toBe(false);
+  });
+
+  it('extracts equal: false from @freezed decorator', () => {
+    const project = createTestProject(`
+      import { freezed } from 'freezedts';
+
+      @freezed({ equal: false })
+      class Person {
+        constructor(params: { name: string }) {}
+      }
+    `);
+
+    const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
+    expect(result.classes[0].equal).toBe(false);
+  });
+
+  it('extracts both copyWith and equal when specified together', () => {
+    const project = createTestProject(`
+      import { freezed } from 'freezedts';
+
+      @freezed({ copyWith: false, equal: false })
+      class Person {
+        constructor(params: { name: string }) {}
+      }
+    `);
+
+    const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
+    expect(result.classes[0].copyWith).toBe(false);
+    expect(result.classes[0].equal).toBe(false);
+  });
+
+  it('leaves copyWith/equal undefined when not specified in decorator', () => {
+    const project = createTestProject(`
+      import { freezed } from 'freezedts';
+
+      @freezed()
+      class Person {
+        constructor(params: { name: string }) {}
+      }
+    `);
+
+    const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
+    expect(result.classes[0].copyWith).toBeUndefined();
+    expect(result.classes[0].equal).toBeUndefined();
+  });
+
+  it('extracts copyWith: true explicitly', () => {
+    const project = createTestProject(`
+      import { freezed } from 'freezedts';
+
+      @freezed({ copyWith: true })
+      class Person {
+        constructor(params: { name: string }) {}
+      }
+    `);
+
+    const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
+    expect(result.classes[0].copyWith).toBe(true);
+  });
 });

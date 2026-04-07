@@ -1,4 +1,4 @@
-import { SourceFile, Type, Symbol as MorphSymbol, Node, SyntaxKind, Decorator } from 'ts-morph';
+import { SourceFile, Type, Symbol as MorphSymbol, Node, SyntaxKind, Decorator, ObjectLiteralExpression } from 'ts-morph';
 
 export interface ParsedProperty {
   name: string;
@@ -14,6 +14,8 @@ export interface ParsedFreezedClass {
   properties: ParsedProperty[];
   hasFieldConfig: boolean;
   equalityMode: 'deep' | 'shallow';
+  copyWith?: boolean;
+  equal?: boolean;
 }
 
 export interface ParseWarning {
@@ -60,6 +62,7 @@ export function parseFreezedClasses(sourceFile: SourceFile): ParseResult {
 
     const { hasFieldConfig, defaultFields } = extractFieldConfig(decorator);
     const equalityMode = extractEqualityMode(decorator);
+    const { copyWith, equal } = extractGenerationOptions(decorator);
     const paramType = paramsParam.getType();
     const properties = extractProperties(paramType, defaultFields);
 
@@ -69,6 +72,8 @@ export function parseFreezedClasses(sourceFile: SourceFile): ParseResult {
       properties,
       hasFieldConfig,
       equalityMode,
+      ...(copyWith !== undefined && { copyWith }),
+      ...(equal !== undefined && { equal }),
     });
   }
 
@@ -118,6 +123,32 @@ function extractEqualityMode(decorator: Decorator): 'deep' | 'shallow' {
 
   const text = init.getText().replace(/['"]/g, '');
   return text === 'shallow' ? 'shallow' : 'deep';
+}
+
+function extractBooleanOption(optionsArg: ObjectLiteralExpression, name: string): boolean | undefined {
+  const prop = optionsArg.getProperty(name);
+  if (!prop || !Node.isPropertyAssignment(prop)) return undefined;
+
+  const init = prop.getInitializer();
+  if (!init) return undefined;
+
+  const text = init.getText();
+  if (text === 'true') return true;
+  if (text === 'false') return false;
+  return undefined;
+}
+
+function extractGenerationOptions(decorator: Decorator): { copyWith?: boolean; equal?: boolean } {
+  const args = decorator.getArguments();
+  if (args.length === 0) return {};
+
+  const optionsArg = args[0];
+  if (!Node.isObjectLiteralExpression(optionsArg)) return {};
+
+  return {
+    copyWith: extractBooleanOption(optionsArg, 'copyWith'),
+    equal: extractBooleanOption(optionsArg, 'equal'),
+  };
 }
 
 function extractProperties(type: Type, defaultFields: Set<string>): ParsedProperty[] {
