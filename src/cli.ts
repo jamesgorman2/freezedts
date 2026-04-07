@@ -5,7 +5,7 @@ import { generate } from './generator/generator.js';
 import { createWatcher } from './generator/watcher.js';
 import { loadConfig } from './generator/config.js';
 
-const EXCLUDED_DIRS = new Set(['node_modules', 'dist', '.git']);
+import { EXCLUDED_DIRS } from './excluded-dirs.js';
 
 export function resolveSourceFiles(dir: string): string[] {
   const results: string[] = [];

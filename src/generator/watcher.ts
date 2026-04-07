@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-const EXCLUDED_DIRS = new Set(['node_modules', 'dist', '.git']);
+import { EXCLUDED_DIRS } from '../excluded-dirs.js';
 
 export function shouldProcess(filePath: string): boolean {
   const base = path.basename(filePath);
