@@ -107,9 +107,11 @@ function main() {
       onChange: (changedFiles) => {
         const timestamp = new Date().toLocaleTimeString();
         const watchResult = generate(changedFiles);
-        for (const f of changedFiles) {
-          const rel = path.relative(resolvedDir, f);
-          console.log(`[${timestamp}] ${rel} → regenerated`);
+        if (watchResult.filesWritten > 0) {
+          for (const f of changedFiles) {
+            const rel = path.relative(resolvedDir, f);
+            console.log(`[${timestamp}] ${rel} → regenerated`);
+          }
         }
         if (watchResult.warnings.length > 0) {
           watchResult.warnings.forEach((w) => console.warn(`  warning: ${w}`));
