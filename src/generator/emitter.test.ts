@@ -325,15 +325,16 @@ describe('emitFreezedFile', () => {
     expect(output).toContain('export type ChildWith<Self>');
   });
 
-  it('generates __freezedDeepEqual helper', () => {
+  it('generates __freezedDeepEqual helper when non-primitive properties exist', () => {
     const classes: ParsedFreezedClass[] = [
       {
-        className: 'Person',
-        generatedClassName: '$Person',
+        className: 'Team',
+        generatedClassName: '$Team',
         hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
         properties: [
           { name: 'name', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'members', type: 'string[]', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
     ];
@@ -357,8 +358,8 @@ describe('emitFreezedFile', () => {
     const output = emitFreezedFile(classes);
     expect(output).toContain('equals(other: unknown): boolean');
     expect(output).toContain('other instanceof $Person');
-    expect(output).toContain('__freezedDeepEqual(this.name, other.name)');
-    expect(output).toContain('__freezedDeepEqual(this.age, other.age)');
+    expect(output).toContain('this.name === other.name');
+    expect(output).toContain('Object.is(this.age, other.age)');
   });
 
   it('generates equals() with === for shallow mode', () => {
@@ -644,7 +645,8 @@ describe('emitFreezedFile', () => {
     ];
     const output = emitFreezedFile(classes);
     expect(output).toContain('equals(other: unknown): boolean');
-    expect(output).toContain('__freezedDeepEqual');
+    expect(output).not.toContain('__freezedDeepEqual');
+    expect(output).toContain('this.name === other.name');
   });
 
   it('includes equals() method when equal is undefined (default)', () => {
@@ -661,7 +663,8 @@ describe('emitFreezedFile', () => {
     ];
     const output = emitFreezedFile(classes);
     expect(output).toContain('equals(other: unknown): boolean');
-    expect(output).toContain('__freezedDeepEqual');
+    expect(output).not.toContain('__freezedDeepEqual');
+    expect(output).toContain('this.name === other.name');
   });
 
   it('omits both with() and equals() when both disabled', () => {
@@ -745,8 +748,8 @@ describe('emitFreezedFile', () => {
     ];
     const output = emitFreezedFile(classes);
     // Must NOT have extra leading spaces between "return" and the first comparison
-    expect(output).toContain('return __freezedDeepEqual(this.a, other.a)');
-    expect(output).not.toContain('return     __freezedDeepEqual');
+    expect(output).toContain('return this.a === other.a');
+    expect(output).not.toContain('return     this.a');
   });
 
   it('generates __freezedDeepEqual with Map and Set support', () => {
@@ -758,6 +761,7 @@ describe('emitFreezedFile', () => {
         equalityMode: 'deep',
         properties: [
           { name: 'name', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'data', type: 'Record<string, unknown>', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
     ];
@@ -775,6 +779,7 @@ describe('emitFreezedFile', () => {
         equalityMode: 'deep',
         properties: [
           { name: 'value', type: 'number', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'data', type: 'Record<string, unknown>', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
     ];
@@ -829,12 +834,73 @@ describe('emitFreezedFile', () => {
         equalityMode: 'deep',
         equal: true,
         properties: [
-          { name: 'value', type: 'number', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'items', type: 'string[]', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
     ];
     const output = emitFreezedFile(classes);
     expect(output).toContain('__freezedDeepEqual');
     expect(output).toContain('$WithEq');
+  });
+
+  it('generates === for string/boolean and Object.is for number in deep equality mode', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Record',
+        generatedClassName: '$Record',
+        hasDefaults: false,
+        hasAsserts: false,
+        equalityMode: 'deep',
+        properties: [
+          { name: 'label', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'count', type: 'number', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'active', type: 'boolean', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'tags', type: 'string[]', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+        ],
+      },
+    ];
+    const output = emitFreezedFile(classes);
+    expect(output).toContain('this.label === other.label');
+    expect(output).toContain('Object.is(this.count, other.count)');
+    expect(output).toContain('this.active === other.active');
+    expect(output).toContain('__freezedDeepEqual(this.tags, other.tags)');
+  });
+
+  it('omits __freezedDeepEqual helper when all deep-mode properties are primitive', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Person',
+        generatedClassName: '$Person',
+        hasDefaults: false,
+        hasAsserts: false,
+        equalityMode: 'deep',
+        properties: [
+          { name: 'name', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'age', type: 'number', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+        ],
+      },
+    ];
+    const output = emitFreezedFile(classes);
+    expect(output).not.toContain('__freezedDeepEqual');
+    expect(output).toContain('this.name === other.name');
+    expect(output).toContain('Object.is(this.age, other.age)');
+  });
+
+  it('uses Object.is for number | undefined in deep equality mode', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Counter',
+        generatedClassName: '$Counter',
+        hasDefaults: true,
+        hasAsserts: false,
+        equalityMode: 'deep',
+        properties: [
+          { name: 'count', type: 'number | undefined', optional: true, hasDefault: true, hasAssert: false, hasMessage: false, isFreezed: false },
+        ],
+      },
+    ];
+    const output = emitFreezedFile(classes);
+    expect(output).toContain('Object.is(this.count, other.count)');
+    expect(output).not.toContain('__freezedDeepEqual');
   });
 });
