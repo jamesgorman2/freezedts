@@ -6,7 +6,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "freezedts": "./dist/cli.js"
+    "freezedts": "dist/cli.js"
   },
   "exports": {
     ".": {

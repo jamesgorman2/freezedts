@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -133,11 +134,6 @@ function main() {
 }
 
 // Only run when executed directly, not when imported
-const isMainModule =
-  process.argv[1] &&
-  path.resolve(process.argv[1]).replace(/\.[^.]+$/, '') ===
-    fileURLToPath(import.meta.url).replace(/\.[^.]+$/, '');
-
-if (isMainModule) {
+if (import.meta.main) {
   main();
 }
