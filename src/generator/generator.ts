@@ -155,6 +155,7 @@ export function generate(filePaths: string[], config?: ResolvedConfig): Generate
       const resolved = resolveClassOptions(cls, resolvedConfig);
       cls.copyWith = resolved.copyWith;
       cls.equal = resolved.equal;
+      cls.toString = resolved.toString;
     }
   }
 
