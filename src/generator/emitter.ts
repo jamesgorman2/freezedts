@@ -9,7 +9,13 @@ export function emitFreezedFile(classes: ParsedFreezedClass[]): string {
   const helpers: string[] = [];
   if (needsWith) helpers.push(emitDeepCopyHelper());
   if (needsEqual) helpers.push(emitDeepEqualHelper());
-  helpers.push(emitDeepFreezeHelper());
+  const needsFreeze = classes.some(c =>
+    c.properties.some(p => {
+      const baseType = p.type.replace(/\s*\|\s*undefined$/, '').trim();
+      return !PRIMITIVE_TYPES.has(baseType);
+    })
+  );
+  if (needsFreeze) helpers.push(emitDeepFreezeHelper());
 
   const sections = classes.map(emitClass);
   return HEADER + '\n' + helpers.join('\n\n') + '\n\n' + sections.join('\n\n') + '\n';
@@ -167,7 +173,8 @@ function emitClassBody(cls: ParsedFreezedClass): string {
 
   const assignments = cls.properties
     .map((p) => {
-      if (PRIMITIVE_TYPES.has(p.type)) {
+      const baseType = p.type.replace(/\s*\|\s*undefined$/, '').trim();
+      if (PRIMITIVE_TYPES.has(baseType)) {
         return `    this.${p.name} = ${paramsVar}.${p.name};`;
       }
       return `    this.${p.name} = __freezedDeepFreeze(${paramsVar}.${p.name});`;
