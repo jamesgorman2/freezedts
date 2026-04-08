@@ -171,7 +171,6 @@ export function generate(filePaths: string[], config?: ResolvedConfig): Generate
             if (!imports.has(prop.importFrom)) imports.set(prop.importFrom, new Set());
             const symbols = imports.get(prop.importFrom)!;
             symbols.add(`$${prop.type.replace(/\s*\|\s*undefined$/, '').trim()}`);
-            symbols.add(`${prop.type.replace(/\s*\|\s*undefined$/, '').trim()}Params`);
             if (cls.copyWith !== false) {
               symbols.add(`${prop.type.replace(/\s*\|\s*undefined$/, '').trim()}With`);
             }
