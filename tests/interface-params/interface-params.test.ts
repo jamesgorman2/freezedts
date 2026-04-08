@@ -8,6 +8,7 @@ beforeAll(() => {
   generate([
     path.join(fixturesDir, 'same-file.ts'),
     path.join(fixturesDir, 'imported.ts'),
+    path.join(fixturesDir, 'type-alias.ts'),
   ]);
 });
 
@@ -60,5 +61,31 @@ describe('interface params', () => {
     const a = new Address({ street: '123 Main', city: 'Springfield' });
     const b = new Address({ street: '123 Main', city: 'Springfield' });
     expect(a.equals(b)).toBe(true);
+  });
+
+  it('works with a type alias as constructor params type', async () => {
+    const { Employee } = await import('./fixtures/type-alias.ts');
+    const e = new Employee({ name: 'Alice', department: 'Eng', level: 3 });
+    expect(e.name).toBe('Alice');
+    expect(e.department).toBe('Eng');
+    expect(e.level).toBe(3);
+    expect(Object.isFrozen(e)).toBe(true);
+  });
+
+  it('with() works with type alias params', async () => {
+    const { Employee } = await import('./fixtures/type-alias.ts');
+    const e1 = new Employee({ name: 'Alice', department: 'Eng', level: 3 });
+    const e2 = e1.with({ level: 4 });
+    expect(e2.level).toBe(4);
+    expect(e2.name).toBe('Alice');
+    expect(e2).not.toBe(e1);
+  });
+
+  it('equals() works with type alias params', async () => {
+    const { Employee } = await import('./fixtures/type-alias.ts');
+    const a = new Employee({ name: 'Alice', department: 'Eng', level: 3 });
+    const b = new Employee({ name: 'Alice', department: 'Eng', level: 3 });
+    expect(a.equals(b)).toBe(true);
+    expect(a.equals(new Employee({ name: 'Alice', department: 'Eng', level: 4 }))).toBe(false);
   });
 });
