@@ -163,7 +163,7 @@ Field config options:
 |--------|------|-------------|
 | `default` | `unknown` | Default value when the parameter is `undefined` |
 | `assert` | `(value) => boolean` | Validation function run at construction time |
-| `message` | `string` | Error message when the assertion fails |
+| `message` | <code>string &#124; undefined</code> | An optional error message when the assertion fails. If omitted, a basic error message will be generated. |
 
 ### Collections
 
