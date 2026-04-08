@@ -111,6 +111,24 @@ npx freezedts
 
 3. The generated `person.freezed.ts` provides an abstract base class `$Person` with `readonly` properties, `Object.freeze(this)`, `with()`, `equals()`, and `toString()`.
 
+Where a source file contains multiple `@freezed` classes, they will be generated to the same file.
+
+```ts
+import { freezed } from 'freezedts';
+import { $Person, $Address } from './person.freezed.ts';
+
+@freezed()
+class Person extends $Person {
+  ...
+}
+
+@freezed()
+class Address extends $Address {
+  ...
+}
+```
+
+
 ### Field Configuration
 
 Configure defaults and validation in the `@freezed()` decorator's `fields` option:
