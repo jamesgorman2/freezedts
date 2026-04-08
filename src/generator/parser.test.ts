@@ -28,12 +28,13 @@ describe('parseFreezedClasses', () => {
       {
         className: 'Person',
         generatedClassName: '$Person',
-        hasFieldConfig: false,
+        hasDefaults: false,
+        hasAsserts: false,
         equalityMode: 'deep',
         properties: [
-          { name: 'firstName', type: 'string', optional: false, hasDefault: false, isFreezed: false },
-          { name: 'lastName', type: 'string', optional: false, hasDefault: false, isFreezed: false },
-          { name: 'age', type: 'number', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'firstName', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'lastName', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'age', type: 'number', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
     ]);
@@ -54,8 +55,8 @@ describe('parseFreezedClasses', () => {
 
     const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
     expect(result.classes[0].properties).toEqual([
-      { name: 'host', type: 'string', optional: false, hasDefault: false, isFreezed: false },
-      { name: 'port', type: 'number', optional: true, hasDefault: false, isFreezed: false },
+      { name: 'host', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+      { name: 'port', type: 'number', optional: true, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
     ]);
   });
 
@@ -107,13 +108,13 @@ describe('parseFreezedClasses', () => {
 
     const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
     expect(result.classes[0].properties).toEqual([
-      { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
-      { name: 'members', type: 'string[]', optional: false, hasDefault: false, isFreezed: false },
-      { name: 'metadata', type: 'Record<string, unknown>', optional: false, hasDefault: false, isFreezed: false },
+      { name: 'name', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+      { name: 'members', type: 'string[]', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+      { name: 'metadata', type: 'Record<string, unknown>', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
     ]);
   });
 
-  it('detects hasFieldConfig when @freezed has fields option', () => {
+  it('detects hasDefaults when @freezed has fields option with default', () => {
     const project = createTestProject(`
       import { freezed } from 'freezedts';
 
@@ -131,7 +132,8 @@ describe('parseFreezedClasses', () => {
     `);
 
     const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
-    expect(result.classes[0].hasFieldConfig).toBe(true);
+    expect(result.classes[0].hasDefaults).toBe(true);
+    expect(result.classes[0].hasAsserts).toBe(false);
   });
 
   it('sets hasDefault on properties with default config', () => {
@@ -154,14 +156,16 @@ describe('parseFreezedClasses', () => {
     `);
 
     const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
+    expect(result.classes[0].hasDefaults).toBe(true);
+    expect(result.classes[0].hasAsserts).toBe(true);
     expect(result.classes[0].properties).toEqual([
-      { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
-      { name: 'age', type: 'number', optional: true, hasDefault: true, isFreezed: false },
-      { name: 'email', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+      { name: 'name', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+      { name: 'age', type: 'number', optional: true, hasDefault: true, hasAssert: false, hasMessage: false, isFreezed: false },
+      { name: 'email', type: 'string', optional: false, hasDefault: false, hasAssert: true, hasMessage: false, isFreezed: false },
     ]);
   });
 
-  it('sets hasFieldConfig false when no fields option', () => {
+  it('sets hasDefaults and hasAsserts false when no fields option', () => {
     const project = createTestProject(`
       import { freezed } from 'freezedts';
 
@@ -172,8 +176,41 @@ describe('parseFreezedClasses', () => {
     `);
 
     const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
-    expect(result.classes[0].hasFieldConfig).toBe(false);
+    expect(result.classes[0].hasDefaults).toBe(false);
+    expect(result.classes[0].hasAsserts).toBe(false);
     expect(result.classes[0].properties[0].hasDefault).toBe(false);
+  });
+
+  it('sets hasAssert and hasMessage on properties with assert config', () => {
+    const project = createTestProject(`
+      import { freezed } from 'freezedts';
+
+      @freezed({
+        fields: {
+          email: {
+            assert: (v: string) => v.includes('@'),
+            message: 'invalid email',
+          },
+          name: { assert: (v: string) => v.length > 0 },
+        }
+      })
+      class Contact {
+        constructor(params: {
+          email: string;
+          name: string;
+          age: number;
+        }) {}
+      }
+    `);
+
+    const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
+    expect(result.classes[0].hasDefaults).toBe(false);
+    expect(result.classes[0].hasAsserts).toBe(true);
+    expect(result.classes[0].properties).toEqual([
+      { name: 'email', type: 'string', optional: false, hasDefault: false, hasAssert: true, hasMessage: true, isFreezed: false },
+      { name: 'name', type: 'string', optional: false, hasDefault: false, hasAssert: true, hasMessage: false, isFreezed: false },
+      { name: 'age', type: 'number', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+    ]);
   });
 
   it('extracts equalityMode as shallow from @freezed decorator', () => {

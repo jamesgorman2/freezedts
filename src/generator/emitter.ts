@@ -159,9 +159,9 @@ function emitClassBody(cls: ParsedFreezedClass): string {
     })
     .join('\n');
 
-  const paramsVar = cls.hasFieldConfig ? 'resolved' : 'params';
+  const paramsVar = (cls.hasDefaults || cls.hasAsserts) ? 'resolved' : 'params';
 
-  const fieldConfigBlock = cls.hasFieldConfig
+  const fieldConfigBlock = (cls.hasDefaults || cls.hasAsserts)
     ? emitFieldConfigBlock(cls)
     : '';
 

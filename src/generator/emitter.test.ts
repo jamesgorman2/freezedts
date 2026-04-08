@@ -8,10 +8,10 @@ describe('emitFreezedFile', () => {
       {
         className: 'Person',
         generatedClassName: '$Person',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
         properties: [
-          { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'name', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
     ];
@@ -27,12 +27,12 @@ describe('emitFreezedFile', () => {
       {
         className: 'Person',
         generatedClassName: '$Person',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
         properties: [
-          { name: 'firstName', type: 'string', optional: false, hasDefault: false, isFreezed: false },
-          { name: 'lastName', type: 'string', optional: false, hasDefault: false, isFreezed: false },
-          { name: 'age', type: 'number', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'firstName', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'lastName', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'age', type: 'number', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
     ];
@@ -56,11 +56,11 @@ describe('emitFreezedFile', () => {
       {
         className: 'Person',
         generatedClassName: '$Person',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
         properties: [
-          { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
-          { name: 'age', type: 'number', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'name', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'age', type: 'number', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
     ];
@@ -81,20 +81,20 @@ describe('emitFreezedFile', () => {
       {
         className: 'Inner',
         generatedClassName: '$Inner',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
         properties: [
-          { name: 'value', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'value', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
       {
         className: 'Outer',
         generatedClassName: '$Outer',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
         properties: [
-          { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
-          { name: 'inner', type: 'Inner', optional: false, hasDefault: false, isFreezed: true },
+          { name: 'name', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'inner', type: 'Inner', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: true },
         ],
       },
     ];
@@ -113,20 +113,20 @@ describe('emitFreezedFile', () => {
       {
         className: 'Inner',
         generatedClassName: '$Inner',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
         properties: [
-          { name: 'value', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'value', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
       {
         className: 'Outer',
         generatedClassName: '$Outer',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
         properties: [
-          { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
-          { name: 'inner', type: 'Inner', optional: false, hasDefault: false, isFreezed: true },
+          { name: 'name', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'inner', type: 'Inner', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: true },
         ],
       },
     ];
@@ -143,11 +143,11 @@ describe('emitFreezedFile', () => {
       {
         className: 'Config',
         generatedClassName: '$Config',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
         properties: [
-          { name: 'host', type: 'string', optional: false, hasDefault: false, isFreezed: false },
-          { name: 'port', type: 'number', optional: true, hasDefault: false, isFreezed: false },
+          { name: 'host', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'port', type: 'number', optional: true, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
     ];
@@ -163,11 +163,11 @@ describe('emitFreezedFile', () => {
       {
         className: 'Counter',
         generatedClassName: '$Counter',
-        hasFieldConfig: true,
+        hasDefaults: true, hasAsserts: false,
         equalityMode: 'deep',
         properties: [
-          { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
-          { name: 'count', type: 'number', optional: false, hasDefault: true, isFreezed: false },
+          { name: 'name', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'count', type: 'number', optional: false, hasDefault: true, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
     ];
@@ -182,11 +182,11 @@ describe('emitFreezedFile', () => {
       {
         className: 'Counter',
         generatedClassName: '$Counter',
-        hasFieldConfig: true,
+        hasDefaults: true, hasAsserts: false,
         equalityMode: 'deep',
         properties: [
-          { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
-          { name: 'count', type: 'number', optional: false, hasDefault: true, isFreezed: false },
+          { name: 'name', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'count', type: 'number', optional: false, hasDefault: true, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
     ];
@@ -205,10 +205,10 @@ describe('emitFreezedFile', () => {
       {
         className: 'Simple',
         generatedClassName: '$Simple',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
         properties: [
-          { name: 'value', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'value', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
     ];
@@ -223,11 +223,11 @@ describe('emitFreezedFile', () => {
       {
         className: 'Counter',
         generatedClassName: '$Counter',
-        hasFieldConfig: true,
+        hasDefaults: true, hasAsserts: false,
         equalityMode: 'deep',
         properties: [
-          { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
-          { name: 'count', type: 'number | undefined', optional: true, hasDefault: true, isFreezed: false },
+          { name: 'name', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'count', type: 'number | undefined', optional: true, hasDefault: true, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
     ];
@@ -243,18 +243,18 @@ describe('emitFreezedFile', () => {
       {
         className: 'Person',
         generatedClassName: '$Person',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
-        properties: [{ name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false }],
+        properties: [{ name: 'name', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false }],
       },
       {
         className: 'Child',
         generatedClassName: '$Child',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
         properties: [
-          { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
-          { name: 'parentName', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'name', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'parentName', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
     ];
@@ -273,10 +273,10 @@ describe('emitFreezedFile', () => {
       {
         className: 'Person',
         generatedClassName: '$Person',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
         properties: [
-          { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'name', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
     ];
@@ -289,11 +289,11 @@ describe('emitFreezedFile', () => {
       {
         className: 'Person',
         generatedClassName: '$Person',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
         properties: [
-          { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
-          { name: 'age', type: 'number', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'name', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'age', type: 'number', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
     ];
@@ -309,11 +309,11 @@ describe('emitFreezedFile', () => {
       {
         className: 'Config',
         generatedClassName: '$Config',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'shallow',
         properties: [
-          { name: 'host', type: 'string', optional: false, hasDefault: false, isFreezed: false },
-          { name: 'port', type: 'number', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'host', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'port', type: 'number', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
     ];
@@ -330,20 +330,20 @@ describe('emitFreezedFile', () => {
       {
         className: 'Inner',
         generatedClassName: '$Inner',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
         properties: [
-          { name: 'value', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'value', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
       {
         className: 'Outer',
         generatedClassName: '$Outer',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'shallow',
         properties: [
-          { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
-          { name: 'inner', type: 'Inner', optional: false, hasDefault: false, isFreezed: true },
+          { name: 'name', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'inner', type: 'Inner', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: true },
         ],
       },
     ];
@@ -357,12 +357,12 @@ describe('emitFreezedFile', () => {
       {
         className: 'Person',
         generatedClassName: '$Person',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
         properties: [
-          { name: 'firstName', type: 'string', optional: false, hasDefault: false, isFreezed: false },
-          { name: 'lastName', type: 'string', optional: false, hasDefault: false, isFreezed: false },
-          { name: 'age', type: 'number', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'firstName', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'lastName', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'age', type: 'number', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
     ];
@@ -379,10 +379,10 @@ describe('emitFreezedFile', () => {
       {
         className: 'Tag',
         generatedClassName: '$Tag',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
         properties: [
-          { name: 'value', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'value', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
     ];
@@ -396,7 +396,7 @@ describe('emitFreezedFile', () => {
       {
         className: 'Empty',
         generatedClassName: '$Empty',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
         properties: [],
       },
@@ -411,11 +411,11 @@ describe('emitFreezedFile', () => {
       {
         className: 'Team',
         generatedClassName: '$Team',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
         properties: [
-          { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
-          { name: 'members', type: 'string[]', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'name', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'members', type: 'string[]', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
     ];
@@ -429,11 +429,11 @@ describe('emitFreezedFile', () => {
       {
         className: 'Team',
         generatedClassName: '$Team',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
         properties: [
-          { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
-          { name: 'members', type: 'string[]', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'name', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'members', type: 'string[]', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
     ];
@@ -447,10 +447,10 @@ describe('emitFreezedFile', () => {
       {
         className: 'Config',
         generatedClassName: '$Config',
-        hasFieldConfig: true,
+        hasDefaults: true, hasAsserts: false,
         equalityMode: 'deep',
         properties: [
-          { name: 'items', type: 'string[]', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'items', type: 'string[]', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
     ];
@@ -463,11 +463,11 @@ describe('emitFreezedFile', () => {
       {
         className: 'Person',
         generatedClassName: '$Person',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
         copyWith: false,
         properties: [
-          { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'name', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
     ];
@@ -485,11 +485,11 @@ describe('emitFreezedFile', () => {
       {
         className: 'Person',
         generatedClassName: '$Person',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
         copyWith: true,
         properties: [
-          { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'name', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
     ];
@@ -504,10 +504,10 @@ describe('emitFreezedFile', () => {
       {
         className: 'Person',
         generatedClassName: '$Person',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
         properties: [
-          { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'name', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
     ];
@@ -522,21 +522,21 @@ describe('emitFreezedFile', () => {
       {
         className: 'NoCopy',
         generatedClassName: '$NoCopy',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
         copyWith: false,
         properties: [
-          { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'name', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
       {
         className: 'WithCopy',
         generatedClassName: '$WithCopy',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
         copyWith: true,
         properties: [
-          { name: 'value', type: 'number', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'value', type: 'number', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
     ];
@@ -554,11 +554,11 @@ describe('emitFreezedFile', () => {
       {
         className: 'Person',
         generatedClassName: '$Person',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
         equal: false,
         properties: [
-          { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'name', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
     ];
@@ -575,11 +575,11 @@ describe('emitFreezedFile', () => {
       {
         className: 'Person',
         generatedClassName: '$Person',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
         equal: true,
         properties: [
-          { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'name', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
     ];
@@ -593,10 +593,10 @@ describe('emitFreezedFile', () => {
       {
         className: 'Person',
         generatedClassName: '$Person',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
         properties: [
-          { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'name', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
     ];
@@ -610,12 +610,12 @@ describe('emitFreezedFile', () => {
       {
         className: 'Minimal',
         generatedClassName: '$Minimal',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
         copyWith: false,
         equal: false,
         properties: [
-          { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'name', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
     ];
@@ -639,11 +639,11 @@ describe('emitFreezedFile', () => {
       {
         className: 'Pair',
         generatedClassName: '$Pair',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
         properties: [
-          { name: 'a', type: 'string', optional: false, hasDefault: false, isFreezed: false },
-          { name: 'b', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'a', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'b', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
     ];
@@ -658,10 +658,10 @@ describe('emitFreezedFile', () => {
       {
         className: 'Simple',
         generatedClassName: '$Simple',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
         properties: [
-          { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'name', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
     ];
@@ -675,10 +675,10 @@ describe('emitFreezedFile', () => {
       {
         className: 'Simple',
         generatedClassName: '$Simple',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
         properties: [
-          { name: 'value', type: 'number', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'value', type: 'number', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
     ];
@@ -691,19 +691,19 @@ describe('emitFreezedFile', () => {
       {
         className: 'Inner',
         generatedClassName: '$Inner',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
         properties: [
-          { name: 'value', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'value', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
       {
         className: 'Outer',
         generatedClassName: '$Outer',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'shallow',
         properties: [
-          { name: 'inner', type: 'Inner', optional: true, hasDefault: false, isFreezed: true },
+          { name: 'inner', type: 'Inner', optional: true, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: true },
         ],
       },
     ];
@@ -719,21 +719,21 @@ describe('emitFreezedFile', () => {
       {
         className: 'NoEq',
         generatedClassName: '$NoEq',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
         equal: false,
         properties: [
-          { name: 'name', type: 'string', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'name', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
       {
         className: 'WithEq',
         generatedClassName: '$WithEq',
-        hasFieldConfig: false,
+        hasDefaults: false, hasAsserts: false,
         equalityMode: 'deep',
         equal: true,
         properties: [
-          { name: 'value', type: 'number', optional: false, hasDefault: false, isFreezed: false },
+          { name: 'value', type: 'number', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },
     ];

@@ -5,6 +5,8 @@ export interface ParsedProperty {
   type: string;
   optional: boolean;
   hasDefault: boolean;
+  hasAssert: boolean;
+  hasMessage: boolean;
   isFreezed: boolean;
   importFrom?: string;
 }
@@ -13,7 +15,8 @@ export interface ParsedFreezedClass {
   className: string;
   generatedClassName: string;
   properties: ParsedProperty[];
-  hasFieldConfig: boolean;
+  hasDefaults: boolean;
+  hasAsserts: boolean;
   equalityMode: 'deep' | 'shallow';
   copyWith?: boolean;
   equal?: boolean;
@@ -61,17 +64,18 @@ export function parseFreezedClasses(sourceFile: SourceFile): ParseResult {
       continue;
     }
 
-    const { hasFieldConfig, defaultFields } = extractFieldConfig(decorator);
+    const { hasDefaults, hasAsserts, defaultFields, assertFields, messageFields } = extractFieldConfig(decorator);
     const equalityMode = extractEqualityMode(decorator);
     const { copyWith, equal } = extractGenerationOptions(decorator);
     const paramType = paramsParam.getType();
-    const properties = extractProperties(paramType, defaultFields);
+    const properties = extractProperties(paramType, defaultFields, assertFields, messageFields);
 
     results.push({
       className,
       generatedClassName: `$${className}`,
       properties,
-      hasFieldConfig,
+      hasDefaults,
+      hasAsserts,
       equalityMode,
       ...(copyWith !== undefined && { copyWith }),
       ...(equal !== undefined && { equal }),
@@ -81,32 +85,58 @@ export function parseFreezedClasses(sourceFile: SourceFile): ParseResult {
   return { classes: results, warnings };
 }
 
-function extractFieldConfig(decorator: Decorator): { hasFieldConfig: boolean; defaultFields: Set<string> } {
+interface FieldConfigResult {
+  hasDefaults: boolean;
+  hasAsserts: boolean;
+  defaultFields: Set<string>;
+  assertFields: Set<string>;
+  messageFields: Set<string>;
+}
+
+const NO_FIELD_CONFIG: FieldConfigResult = {
+  hasDefaults: false,
+  hasAsserts: false,
+  defaultFields: new Set(),
+  assertFields: new Set(),
+  messageFields: new Set(),
+};
+
+function extractFieldConfig(decorator: Decorator): FieldConfigResult {
   const args = decorator.getArguments();
-  if (args.length === 0) return { hasFieldConfig: false, defaultFields: new Set() };
+  if (args.length === 0) return NO_FIELD_CONFIG;
 
   const optionsArg = args[0];
-  if (!Node.isObjectLiteralExpression(optionsArg))
-    return { hasFieldConfig: false, defaultFields: new Set() };
+  if (!Node.isObjectLiteralExpression(optionsArg)) return NO_FIELD_CONFIG;
 
   const fieldsProp = optionsArg.getProperty('fields');
-  if (!fieldsProp || !Node.isPropertyAssignment(fieldsProp))
-    return { hasFieldConfig: false, defaultFields: new Set() };
+  if (!fieldsProp || !Node.isPropertyAssignment(fieldsProp)) return NO_FIELD_CONFIG;
 
   const fieldsInit = fieldsProp.getInitializerIfKind(SyntaxKind.ObjectLiteralExpression);
-  if (!fieldsInit) return { hasFieldConfig: true, defaultFields: new Set() };
+  if (!fieldsInit) return { hasDefaults: false, hasAsserts: false, defaultFields: new Set(), assertFields: new Set(), messageFields: new Set() };
 
   const defaultFields = new Set<string>();
+  const assertFields = new Set<string>();
+  const messageFields = new Set<string>();
+
   for (const prop of fieldsInit.getProperties()) {
     if (Node.isPropertyAssignment(prop)) {
       const fieldInit = prop.getInitializerIfKind(SyntaxKind.ObjectLiteralExpression);
-      if (fieldInit && fieldInit.getProperty('default')) {
-        defaultFields.add(prop.getName());
+      if (fieldInit) {
+        const name = prop.getName();
+        if (fieldInit.getProperty('default')) defaultFields.add(name);
+        if (fieldInit.getProperty('assert')) assertFields.add(name);
+        if (fieldInit.getProperty('message')) messageFields.add(name);
       }
     }
   }
 
-  return { hasFieldConfig: true, defaultFields };
+  return {
+    hasDefaults: defaultFields.size > 0,
+    hasAsserts: assertFields.size > 0,
+    defaultFields,
+    assertFields,
+    messageFields,
+  };
 }
 
 function extractEqualityMode(decorator: Decorator): 'deep' | 'shallow' {
@@ -152,7 +182,12 @@ function extractGenerationOptions(decorator: Decorator): { copyWith?: boolean; e
   };
 }
 
-function extractProperties(type: Type, defaultFields: Set<string>): ParsedProperty[] {
+function extractProperties(
+  type: Type,
+  defaultFields: Set<string>,
+  assertFields: Set<string>,
+  messageFields: Set<string>,
+): ParsedProperty[] {
   return type.getProperties().map((prop: MorphSymbol) => {
     const propType = prop.getValueDeclaration()?.getType();
     const isOptional = prop.isOptional();
@@ -160,11 +195,14 @@ function extractProperties(type: Type, defaultFields: Set<string>): ParsedProper
     let typeText = propType?.getText() ?? 'unknown';
     typeText = typeText.replace(/import\(.*?\)\./g, '');
 
+    const name = prop.getName();
     return {
-      name: prop.getName(),
+      name,
       type: typeText,
       optional: isOptional,
-      hasDefault: defaultFields.has(prop.getName()),
+      hasDefault: defaultFields.has(name),
+      hasAssert: assertFields.has(name),
+      hasMessage: messageFields.has(name),
       isFreezed: false,
     };
   });
