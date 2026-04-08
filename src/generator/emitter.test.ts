@@ -177,12 +177,13 @@ describe('emitFreezedFile', () => {
     expect(output).toContain('  count?: number;');
   });
 
-  it('generates field config processing block when hasFieldConfig is true', () => {
+  it('generates per-field default blocks when hasDefaults is true', () => {
     const classes: ParsedFreezedClass[] = [
       {
         className: 'Counter',
         generatedClassName: '$Counter',
-        hasDefaults: true, hasAsserts: false,
+        hasDefaults: true,
+        hasAsserts: false,
         equalityMode: 'deep',
         properties: [
           { name: 'name', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
@@ -194,10 +195,66 @@ describe('emitFreezedFile', () => {
     const output = emitFreezedFile(classes);
     expect(output).toContain("Symbol.for('freezedts:options')");
     expect(output).toContain('const resolved = { ...params } as Required<CounterParams>;');
-    expect(output).toContain("if ('default' in config");
-    expect(output).toContain('config.assert');
+    // Per-field default block, no generic loop
+    expect(output).toContain('(resolved as any).count === undefined');
+    expect(output).toContain('__fields.count.default');
+    // No assert code emitted
+    expect(output).not.toContain('.assert');
+    // No generic loop
+    expect(output).not.toContain('Object.entries');
     expect(output).toContain('this.name = resolved.name;');
     expect(output).toContain('this.count = resolved.count;');
+  });
+
+  it('generates per-field assert blocks when hasAsserts is true', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Email',
+        generatedClassName: '$Email',
+        hasDefaults: false,
+        hasAsserts: true,
+        equalityMode: 'deep',
+        properties: [
+          { name: 'address', type: 'string', optional: false, hasDefault: false, hasAssert: true, hasMessage: true, isFreezed: false },
+          { name: 'subject', type: 'string', optional: false, hasDefault: false, hasAssert: true, hasMessage: false, isFreezed: false },
+          { name: 'body', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+        ],
+      },
+    ];
+
+    const output = emitFreezedFile(classes);
+    // Assert with custom message
+    expect(output).toContain('__fields.address.assert((resolved as any).address)');
+    expect(output).toContain('__fields.address.message');
+    // Assert without message — template literal fallback
+    expect(output).toContain('__fields.subject.assert((resolved as any).subject)');
+    expect(output).toContain("Assertion failed for");
+    // No default code
+    expect(output).not.toContain('.default');
+    // body has no assert — no block for it
+    expect(output).not.toContain('__fields.body');
+  });
+
+  it('generates if/else-if block when property has both default and assert', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Config',
+        generatedClassName: '$Config',
+        hasDefaults: true,
+        hasAsserts: true,
+        equalityMode: 'deep',
+        properties: [
+          { name: 'port', type: 'number', optional: false, hasDefault: true, hasAssert: true, hasMessage: true, isFreezed: false },
+        ],
+      },
+    ];
+
+    const output = emitFreezedFile(classes);
+    // if/else if pattern: default branch, then assert branch
+    expect(output).toContain('(resolved as any).port === undefined');
+    expect(output).toContain('__fields.port.default');
+    expect(output).toContain('} else if (!__fields.port.assert');
+    expect(output).toContain('__fields.port.message');
   });
 
   it('omits processing block when hasFieldConfig is false', () => {
@@ -442,14 +499,16 @@ describe('emitFreezedFile', () => {
     expect(output).toContain('this.members = __freezedDeepFreeze(params.members)');
   });
 
-  it('uses __freezedDeepFreeze with resolved params when hasFieldConfig', () => {
+  it('uses __freezedDeepFreeze with resolved params when hasDefaults', () => {
     const classes: ParsedFreezedClass[] = [
       {
         className: 'Config',
         generatedClassName: '$Config',
-        hasDefaults: true, hasAsserts: false,
+        hasDefaults: true,
+        hasAsserts: false,
         equalityMode: 'deep',
         properties: [
+          { name: 'count', type: 'number', optional: false, hasDefault: true, hasAssert: false, hasMessage: false, isFreezed: false },
           { name: 'items', type: 'string[]', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
         ],
       },

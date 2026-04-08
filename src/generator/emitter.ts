@@ -193,18 +193,34 @@ ${methods.join('\n\n')}
 
 function emitFieldConfigBlock(cls: ParsedFreezedClass): string {
   const lines = [
-    `    const __options = (new.target as any)[Symbol.for('freezedts:options')];`,
-    `    const __fields: Record<string, any> = __options?.fields ?? {};`,
+    `    const __fields = (new.target as any)[Symbol.for('freezedts:options')]?.fields ?? {};`,
     `    const resolved = { ...params } as Required<${cls.className}Params>;`,
-    `    for (const [key, config] of Object.entries(__fields)) {`,
-    `      if ('default' in config && (resolved as any)[key] === undefined) {`,
-    `        (resolved as any)[key] = config.default;`,
-    `      }`,
-    `      if (config.assert && !config.assert((resolved as any)[key])) {`,
-    "        throw new Error(config.message ?? `Assertion failed for '${new.target.name}.${key}'`);",
-    `      }`,
-    `    }`,
   ];
+
+  for (const p of cls.properties) {
+    if (p.hasDefault && p.hasAssert) {
+      const errorExpr = p.hasMessage
+        ? `__fields.${p.name}.message`
+        : `\`Assertion failed for '\${new.target.name}.${p.name}'\``;
+      lines.push(`    if ((resolved as any).${p.name} === undefined) {`);
+      lines.push(`      (resolved as any).${p.name} = __fields.${p.name}.default;`);
+      lines.push(`    } else if (!__fields.${p.name}.assert((resolved as any).${p.name})) {`);
+      lines.push(`      throw new Error(${errorExpr});`);
+      lines.push(`    }`);
+    } else if (p.hasDefault) {
+      lines.push(`    if ((resolved as any).${p.name} === undefined) {`);
+      lines.push(`      (resolved as any).${p.name} = __fields.${p.name}.default;`);
+      lines.push(`    }`);
+    } else if (p.hasAssert) {
+      const errorExpr = p.hasMessage
+        ? `__fields.${p.name}.message`
+        : `\`Assertion failed for '\${new.target.name}.${p.name}'\``;
+      lines.push(`    if (!__fields.${p.name}.assert((resolved as any).${p.name})) {`);
+      lines.push(`      throw new Error(${errorExpr});`);
+      lines.push(`    }`);
+    }
+  }
+
   return lines.join('\n') + '\n';
 }
 
