@@ -20,6 +20,7 @@ export interface ParsedFreezedClass {
   equalityMode: 'deep' | 'shallow';
   copyWith?: boolean;
   equal?: boolean;
+  toString?: boolean;
 }
 
 export interface ParseWarning {
@@ -66,7 +67,7 @@ export function parseFreezedClasses(sourceFile: SourceFile): ParseResult {
 
     const { hasDefaults, hasAsserts, defaultFields, assertFields, messageFields } = extractFieldConfig(decorator);
     const equalityMode = extractEqualityMode(decorator);
-    const { copyWith, equal } = extractGenerationOptions(decorator);
+    const { copyWith, equal, toString: toStringOpt } = extractGenerationOptions(decorator);
     const paramType = paramsParam.getType();
     const properties = extractProperties(paramType, defaultFields, assertFields, messageFields);
 
@@ -79,6 +80,7 @@ export function parseFreezedClasses(sourceFile: SourceFile): ParseResult {
       equalityMode,
       ...(copyWith !== undefined && { copyWith }),
       ...(equal !== undefined && { equal }),
+      ...(toStringOpt !== undefined && { toString: toStringOpt }),
     });
   }
 
@@ -169,16 +171,17 @@ function extractBooleanOption(optionsArg: ObjectLiteralExpression, name: string)
   return undefined;
 }
 
-function extractGenerationOptions(decorator: Decorator): { copyWith?: boolean; equal?: boolean } {
+function extractGenerationOptions(decorator: Decorator): { copyWith?: boolean; equal?: boolean; toString?: boolean } {
   const args = decorator.getArguments();
-  if (args.length === 0) return {};
+  if (args.length === 0) return { copyWith: undefined, equal: undefined, toString: undefined };
 
   const optionsArg = args[0];
-  if (!Node.isObjectLiteralExpression(optionsArg)) return {};
+  if (!Node.isObjectLiteralExpression(optionsArg)) return { copyWith: undefined, equal: undefined, toString: undefined };
 
   return {
     copyWith: extractBooleanOption(optionsArg, 'copyWith'),
     equal: extractBooleanOption(optionsArg, 'equal'),
+    toString: extractBooleanOption(optionsArg, 'toString'),
   };
 }
 

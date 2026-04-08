@@ -318,11 +318,11 @@ describe('parseFreezedClasses', () => {
     expect(result.classes[0].equal).toBe(false);
   });
 
-  it('extracts both copyWith and equal when specified together', () => {
+  it('extracts copyWith, equal, and toString when specified together', () => {
     const project = createTestProject(`
       import { freezed } from 'freezedts';
 
-      @freezed({ copyWith: false, equal: false })
+      @freezed({ copyWith: false, equal: false, toString: false })
       class Person {
         constructor(params: { name: string }) {}
       }
@@ -331,9 +331,10 @@ describe('parseFreezedClasses', () => {
     const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
     expect(result.classes[0].copyWith).toBe(false);
     expect(result.classes[0].equal).toBe(false);
+    expect(result.classes[0].toString).toBe(false);
   });
 
-  it('leaves copyWith/equal undefined when not specified in decorator', () => {
+  it('leaves copyWith/equal/toString undefined when not specified in decorator', () => {
     const project = createTestProject(`
       import { freezed } from 'freezedts';
 
@@ -346,6 +347,7 @@ describe('parseFreezedClasses', () => {
     const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
     expect(result.classes[0].copyWith).toBeUndefined();
     expect(result.classes[0].equal).toBeUndefined();
+    expect(Object.hasOwn(result.classes[0], 'toString')).toBe(false);
   });
 
   it('extracts copyWith: true explicitly', () => {
@@ -360,6 +362,48 @@ describe('parseFreezedClasses', () => {
 
     const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
     expect(result.classes[0].copyWith).toBe(true);
+  });
+
+  it('extracts toString: false from @freezed decorator', () => {
+    const project = createTestProject(`
+      import { freezed } from 'freezedts';
+
+      @freezed({ toString: false })
+      class Person {
+        constructor(params: { name: string }) {}
+      }
+    `);
+
+    const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
+    expect(result.classes[0].toString).toBe(false);
+  });
+
+  it('extracts toString: true explicitly', () => {
+    const project = createTestProject(`
+      import { freezed } from 'freezedts';
+
+      @freezed({ toString: true })
+      class Person {
+        constructor(params: { name: string }) {}
+      }
+    `);
+
+    const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
+    expect(result.classes[0].toString).toBe(true);
+  });
+
+  it('leaves toString undefined when not specified in decorator', () => {
+    const project = createTestProject(`
+      import { freezed } from 'freezedts';
+
+      @freezed()
+      class Person {
+        constructor(params: { name: string }) {}
+      }
+    `);
+
+    const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
+    expect(Object.hasOwn(result.classes[0], 'toString')).toBe(false);
   });
 
   it('strips import() prefix from types referencing other files', () => {
