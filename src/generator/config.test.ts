@@ -22,6 +22,7 @@ describe('loadConfig', () => {
         format: false,
         copyWith: true,
         equal: true,
+        toString: true,
       });
     });
   });
@@ -49,6 +50,18 @@ describe('loadConfig', () => {
     });
   });
 
+  it('reads toString: false from yaml config', () => {
+    withTempDir((dir) => {
+      const configPath = path.join(dir, 'freezedts.config.yaml');
+      fs.writeFileSync(configPath, `freezed:\n  options:\n    toString: false\n`);
+
+      const config = loadConfig(configPath);
+      expect(config.toString).toBe(false);
+      expect(config.copyWith).toBe(true);
+      expect(config.equal).toBe(true);
+    });
+  });
+
   it('reads format: true from yaml config', () => {
     withTempDir((dir) => {
       const configPath = path.join(dir, 'freezedts.config.yaml');
@@ -68,6 +81,7 @@ describe('loadConfig', () => {
         '    format: true',
         '    copyWith: false',
         '    equal: false',
+        '    toString: false',
       ].join('\n'));
 
       const config = loadConfig(configPath);
@@ -75,6 +89,7 @@ describe('loadConfig', () => {
         format: true,
         copyWith: false,
         equal: false,
+        toString: false,
       });
     });
   });
@@ -89,6 +104,7 @@ describe('loadConfig', () => {
         format: false,
         copyWith: true,
         equal: true,
+        toString: true,
       });
     });
   });
@@ -103,6 +119,7 @@ describe('loadConfig', () => {
         format: false,
         copyWith: true,
         equal: true,
+        toString: true,
       });
     });
   });
@@ -118,26 +135,26 @@ describe('loadConfig', () => {
 });
 
 describe('resolveClassOptions', () => {
-  const defaultConfig: ResolvedConfig = { format: false, copyWith: true, equal: true };
-  const disabledConfig: ResolvedConfig = { format: false, copyWith: false, equal: false };
+  const defaultConfig: ResolvedConfig = { format: false, copyWith: true, equal: true, toString: true };
+  const disabledConfig: ResolvedConfig = { format: false, copyWith: false, equal: false, toString: false };
 
   it('uses config values when class options are undefined', () => {
     const result = resolveClassOptions({}, disabledConfig);
-    expect(result).toEqual({ copyWith: false, equal: false });
+    expect(result).toEqual({ copyWith: false, equal: false, toString: false });
   });
 
   it('per-class true overrides config false', () => {
-    const result = resolveClassOptions({ copyWith: true, equal: true }, disabledConfig);
-    expect(result).toEqual({ copyWith: true, equal: true });
+    const result = resolveClassOptions({ copyWith: true, equal: true, toString: true }, disabledConfig);
+    expect(result).toEqual({ copyWith: true, equal: true, toString: true });
   });
 
   it('per-class false overrides config true', () => {
-    const result = resolveClassOptions({ copyWith: false, equal: false }, defaultConfig);
-    expect(result).toEqual({ copyWith: false, equal: false });
+    const result = resolveClassOptions({ copyWith: false, equal: false, toString: false }, defaultConfig);
+    expect(result).toEqual({ copyWith: false, equal: false, toString: false });
   });
 
   it('mixes per-class and config values', () => {
     const result = resolveClassOptions({ copyWith: false }, defaultConfig);
-    expect(result).toEqual({ copyWith: false, equal: true });
+    expect(result).toEqual({ copyWith: false, equal: true, toString: true });
   });
 });

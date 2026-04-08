@@ -5,6 +5,7 @@ export interface ResolvedConfig {
   format: boolean;
   copyWith: boolean;
   equal: boolean;
+  toString: boolean;
 }
 
 interface FreezedConfigFile {
@@ -13,6 +14,7 @@ interface FreezedConfigFile {
       format?: boolean;
       copyWith?: boolean;
       equal?: boolean;
+      toString?: boolean;
     };
   };
 }
@@ -21,6 +23,7 @@ export const DEFAULTS: ResolvedConfig = {
   format: false,
   copyWith: true,
   equal: true,
+  toString: true,
 };
 
 export function loadConfig(configPath: string): ResolvedConfig {
@@ -43,15 +46,17 @@ export function loadConfig(configPath: string): ResolvedConfig {
     format: options?.format ?? DEFAULTS.format,
     copyWith: options?.copyWith ?? DEFAULTS.copyWith,
     equal: options?.equal ?? DEFAULTS.equal,
+    toString: options?.toString ?? DEFAULTS.toString,
   };
 }
 
 export function resolveClassOptions(
-  cls: { copyWith?: boolean; equal?: boolean },
+  cls: { copyWith?: boolean; equal?: boolean; toString?: boolean },
   config: ResolvedConfig,
-): { copyWith: boolean; equal: boolean } {
+): { copyWith: boolean; equal: boolean; toString: boolean } {
   return {
     copyWith: cls.copyWith ?? config.copyWith,
     equal: cls.equal ?? config.equal,
+    toString: Object.hasOwn(cls, 'toString') ? cls.toString! : config.toString,
   };
 }
