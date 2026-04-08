@@ -147,26 +147,6 @@ Field config options:
 | `assert` | `(value) => boolean` | Validation function run at construction time |
 | `message` | `string` | Error message when the assertion fails |
 
-### Nested Freezed Types
-
-When one `@freezed` class references another as a property, the generator recognizes the relationship and enables deep copy support:
-
-```ts
-@freezed()
-class Address extends $Address {
-  constructor(params: { street: string; city: string }) {
-    super(params);
-  }
-}
-
-@freezed()
-class Employee extends $Employee {
-  constructor(params: { name: string; address: Address }) {
-    super(params);
-  }
-}
-```
-
 ### Collections
 
 Arrays, Maps, and Sets are recursively frozen at construction time. Mutation attempts throw at runtime:
