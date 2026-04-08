@@ -17,7 +17,7 @@ A TypeScript port of Dart's [freezed](https://github.com/rrousselGit/freezed) pa
 - [Deep Copy](#deep-copy)
 - [Deep Equality](#deep-equality)
 - [Configuration](#configuration)
-  - [Per-Class Options](#per-class-options)
+  - [Per-Class Configuration](#per-class-configuration)
   - [Project-Wide Configuration](#project-wide-configuration)
   - [Resolution Order](#resolution-order)
 - [Building the Library](#building-the-library)
@@ -57,6 +57,9 @@ The generator produces `$Person` with:
 ```bash
 npm install freezedts
 ```
+
+`freezedts` must be a runtime dependency. It has a small runtime footprint and
+no transient runtime dependencies.
 
 **Requirements:** TypeScript 6, ESM, TC39 stage 3 decorators.
 
@@ -251,19 +254,15 @@ class ShallowPerson extends $ShallowPerson { ... }
 
 ## Configuration
 
-### Per-Class Options
+### Per-Class Configuration
 
 Disable generation of specific methods via the `@freezed()` decorator:
 
 ```ts
 @freezed({ copyWith: false })   // skip with() generation
-class NoCopy extends $NoCopy { ... }
-
 @freezed({ equal: false })      // skip equals() generation
-class NoEqual extends $NoEqual { ... }
-
-@freezed({ copyWith: false, equal: false })  // only immutability + toString()
-class Minimal extends $Minimal { ... }
+@freezed({ toString: false })   // skip toString() generation
+@freezed({ copyWith: false, equal: false, toString: false })  // only immutability
 ```
 
 ### Project-Wide Configuration
@@ -281,6 +280,9 @@ freezed:
 
     # Disable equals() generation for the entire project
     equal: false
+
+    # Disable toString() generation for the entire project
+    toString: false
 ```
 
 All options default to `true` (enabled) except `format` which defaults to `false`.
