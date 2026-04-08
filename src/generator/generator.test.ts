@@ -319,6 +319,96 @@ describe('generate', () => {
     });
   });
 
+  it('reports error when default value fails its assertion', async () => {
+    await withTempDir((dir) => {
+      const sourceFile = path.join(dir, 'bad-default.ts');
+      fs.writeFileSync(
+        sourceFile,
+        `
+      import { freezed } from 'freezedts';
+
+      @freezed({
+        fields: {
+          port: {
+            default: -1,
+            assert: (v: number) => v > 0 && v < 65536,
+            message: 'port out of range',
+          },
+        },
+      })
+      class Config {
+        constructor(params: { name: string; port?: number }) {}
+      }
+    `,
+      );
+
+      const result = generate([sourceFile]);
+      expect(result.errors.length).toBeGreaterThan(0);
+      expect(result.errors[0]).toContain('Config');
+      expect(result.errors[0]).toContain('port');
+      expect(result.errors[0]).toContain('default');
+    });
+  });
+
+  it('passes when default value satisfies assertion', async () => {
+    await withTempDir((dir) => {
+      const sourceFile = path.join(dir, 'good-default.ts');
+      fs.writeFileSync(
+        sourceFile,
+        `
+      import { freezed } from 'freezedts';
+
+      @freezed({
+        fields: {
+          port: {
+            default: 3000,
+            assert: (v: number) => v > 0 && v < 65536,
+            message: 'port out of range',
+          },
+        },
+      })
+      class Config {
+        constructor(params: { name: string; port?: number }) {}
+      }
+    `,
+      );
+
+      const result = generate([sourceFile]);
+      expect(result.errors).toEqual([]);
+    });
+  });
+
+  it('skips validation when default or assert uses external references', async () => {
+    await withTempDir((dir) => {
+      const sourceFile = path.join(dir, 'complex-default.ts');
+      fs.writeFileSync(
+        sourceFile,
+        `
+      import { freezed } from 'freezedts';
+
+      const DEFAULT_PORT = 3000;
+
+      @freezed({
+        fields: {
+          port: {
+            default: DEFAULT_PORT,
+            assert: (v: number) => v > 0,
+          },
+        },
+      })
+      class Config {
+        constructor(params: { name: string; port?: number }) {}
+      }
+    `,
+      );
+
+      const result = generate([sourceFile]);
+      // Should not error — validation skipped for non-literal references
+      expect(result.errors).toEqual([]);
+      expect(result.filesWritten).toBe(1);
+    });
+  });
+
   it('resolves isFreezed across files and generates imports', async () => {
     await withTempDir((dir) => {
       const innerFile = path.join(dir, 'inner.ts');

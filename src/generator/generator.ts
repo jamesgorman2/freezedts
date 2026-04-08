@@ -1,4 +1,4 @@
-import { Project } from 'ts-morph';
+import { Project, Node, SyntaxKind } from 'ts-morph';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { parseFreezedClasses } from './parser.js';
@@ -10,6 +10,78 @@ export interface GenerateResult {
   filesWritten: number;
   errors: string[];
   warnings: string[];
+}
+
+function validateDefaults(
+  cls: { className: string; properties: Array<{ name: string; hasDefault: boolean; hasAssert: boolean }> },
+  sourceFile: import('ts-morph').SourceFile,
+  project: Project,
+): string[] {
+  const errors: string[] = [];
+
+  for (const prop of cls.properties) {
+    if (!prop.hasDefault || !prop.hasAssert) continue;
+
+    // Find the field config in the AST to extract default and assert text
+    const classDecl = sourceFile.getClasses().find(c => c.getName() === cls.className);
+    if (!classDecl) continue;
+
+    const decorator = classDecl.getDecorators().find(d => d.getName() === 'freezed');
+    if (!decorator) continue;
+
+    const args = decorator.getArguments();
+    if (args.length === 0) continue;
+
+    const optionsArg = args[0];
+    if (!Node.isObjectLiteralExpression(optionsArg)) continue;
+
+    const fieldsProp = optionsArg.getProperty('fields');
+    if (!fieldsProp || !Node.isPropertyAssignment(fieldsProp)) continue;
+
+    const fieldsInit = fieldsProp.getInitializerIfKind(SyntaxKind.ObjectLiteralExpression);
+    if (!fieldsInit) continue;
+
+    const fieldProp = fieldsInit.getProperty(prop.name);
+    if (!fieldProp || !Node.isPropertyAssignment(fieldProp)) continue;
+
+    const fieldInit = fieldProp.getInitializerIfKind(SyntaxKind.ObjectLiteralExpression);
+    if (!fieldInit) continue;
+
+    const defaultProp = fieldInit.getProperty('default');
+    const assertProp = fieldInit.getProperty('assert');
+    if (!defaultProp || !assertProp) continue;
+    if (!Node.isPropertyAssignment(defaultProp) || !Node.isPropertyAssignment(assertProp)) continue;
+
+    const defaultInit = defaultProp.getInitializer();
+    const assertInit = assertProp.getInitializer();
+    if (!defaultInit || !assertInit) continue;
+
+    const defaultText = defaultInit.getText();
+    const assertText = assertInit.getText();
+
+    // Transpile TypeScript to JavaScript and eval
+    const testExpr = `(${assertText})(${defaultText})`;
+    try {
+      const tmpFile = project.createSourceFile('__validate_default.ts', `export default ${testExpr};\n`);
+      const emitOutput = tmpFile.getEmitOutput();
+      project.removeSourceFile(tmpFile);
+      const jsFiles = emitOutput.getOutputFiles();
+      if (jsFiles.length === 0) continue;
+      const js = jsFiles[0].getText();
+      // Extract the default export value from the compiled JS
+      // CommonJS: exports.default = expr;  ESM: export default expr;
+      const match = js.match(/exports\.default\s*=\s*(.+);/s) ?? js.match(/export default (.+);/s);
+      if (!match) continue;
+      const result = eval(match[1]);
+      if (result === false) {
+        errors.push(`Default value for '${cls.className}.${prop.name}' fails its assertion`);
+      }
+    } catch {
+      // Can't evaluate (external references, complex expressions) — skip silently
+    }
+  }
+
+  return errors;
 }
 
 export function generate(filePaths: string[], config?: ResolvedConfig): GenerateResult {
@@ -34,6 +106,10 @@ export function generate(filePaths: string[], config?: ResolvedConfig): Generate
       const { classes, warnings: parseWarnings } = parseFreezedClasses(sourceFile);
       for (const w of parseWarnings) {
         warnings.push(`${filePath}:${w.line}: ${w.message}`);
+      }
+      for (const cls of classes) {
+        const validationErrors = validateDefaults(cls, sourceFile, project);
+        errors.push(...validationErrors.map(e => `${filePath}: ${e}`));
       }
       if (classes.length > 0) {
         parsed.set(filePath, { absolutePath, classes });
