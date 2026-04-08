@@ -1,6 +1,6 @@
 {
   "name": "freezedts",
-  "version": "0.2.0",
+  "version": "0.10.0",
   "type": "module",
   "description": "Immutable class management for TypeScript via code generation",
   "main": "./dist/index.js",
@@ -37,12 +37,12 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "ts-morph": "^27.0.2",
     "yaml": "^2.8.3"
   },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/node": "^25.5.2",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.2",
+    "ts-morph": "^27.0.2"
   }
 }
