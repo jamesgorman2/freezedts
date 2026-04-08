@@ -8,6 +8,7 @@ export interface FreezedOptions {
   equality?: 'deep' | 'shallow';
   copyWith?: boolean;
   equal?: boolean;
+  toString?: boolean;
   fields?: Record<string, FieldConfig>;
 }
 
