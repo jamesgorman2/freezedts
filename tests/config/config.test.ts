@@ -11,6 +11,7 @@ beforeAll(() => {
     path.join(fixturesDir, 'no-copy-with.ts'),
     path.join(fixturesDir, 'no-equal.ts'),
     path.join(fixturesDir, 'all-disabled.ts'),
+    path.join(fixturesDir, 'no-to-string.ts'),
   ]);
 });
 
@@ -71,18 +72,43 @@ describe('per-class opt-out — equal: false', () => {
   });
 });
 
-describe('per-class opt-out — both disabled', () => {
-  it('does not generate with or equals', async () => {
+describe('per-class opt-out — toString: false', () => {
+  it('does not generate toString()', async () => {
+    const { NoToString } = await import('./fixtures/no-to-string.ts');
+    const instance = new NoToString({ name: 'Alice', age: 30 });
+    // toString() falls back to default Object.prototype.toString
+    expect(instance.toString()).not.toContain('Alice');
+  });
+
+  it('still generates with()', async () => {
+    const { NoToString } = await import('./fixtures/no-to-string.ts');
+    const instance = new NoToString({ name: 'Alice', age: 30 });
+    const updated = instance.with({ name: 'Bob' });
+    expect(updated.name).toBe('Bob');
+    expect(updated.age).toBe(30);
+  });
+
+  it('still generates equals()', async () => {
+    const { NoToString } = await import('./fixtures/no-to-string.ts');
+    const a = new NoToString({ name: 'Alice', age: 30 });
+    const b = new NoToString({ name: 'Alice', age: 30 });
+    expect(a.equals(b)).toBe(true);
+  });
+
+  it('is still frozen', async () => {
+    const { NoToString } = await import('./fixtures/no-to-string.ts');
+    const instance = new NoToString({ name: 'Alice', age: 30 });
+    expect(Object.isFrozen(instance)).toBe(true);
+  });
+});
+
+describe('per-class opt-out — all disabled', () => {
+  it('does not generate with, equals, or toString', async () => {
     const { Minimal } = await import('./fixtures/all-disabled.ts');
     const instance = new Minimal({ name: 'Alice', value: 42 });
     expect((instance as any).with).toBeUndefined();
     expect((instance as any).equals).toBeUndefined();
-  });
-
-  it('still generates toString()', async () => {
-    const { Minimal } = await import('./fixtures/all-disabled.ts');
-    const instance = new Minimal({ name: 'Alice', value: 42 });
-    expect(instance.toString()).toBe('Minimal(name: Alice, value: 42)');
+    expect(instance.toString()).not.toContain('Alice');
   });
 
   it('is still frozen with readonly properties', async () => {
@@ -116,7 +142,7 @@ describe('config file — project-wide defaults', () => {
         }
       `);
 
-      generate([sourceFile], { format: false, copyWith: false, equal: true });
+      generate([sourceFile], { format: false, copyWith: false, equal: true, toString: true });
 
       const content = fs.readFileSync(path.join(dir, 'person.freezed.ts'), 'utf-8');
       expect(content).not.toContain('get with()');
@@ -136,7 +162,7 @@ describe('config file — project-wide defaults', () => {
         }
       `);
 
-      generate([sourceFile], { format: false, copyWith: false, equal: true });
+      generate([sourceFile], { format: false, copyWith: false, equal: true, toString: true });
 
       const content = fs.readFileSync(path.join(dir, 'person.freezed.ts'), 'utf-8');
       expect(content).toContain('get with()');
@@ -156,11 +182,32 @@ describe('config file — project-wide defaults', () => {
         }
       `);
 
-      generate([sourceFile], { format: false, copyWith: true, equal: false });
+      generate([sourceFile], { format: false, copyWith: true, equal: false, toString: true });
 
       const content = fs.readFileSync(path.join(dir, 'person.freezed.ts'), 'utf-8');
       expect(content).toContain('get with()');
       expect(content).not.toContain('equals(other: unknown)');
+    });
+  });
+
+  it('config toString: false disables toString() for all classes', () => {
+    withTempDir((dir) => {
+      const sourceFile = path.join(dir, 'person.ts');
+      fs.writeFileSync(sourceFile, `
+        import { freezed } from 'freezedts';
+
+        @freezed()
+        class Person {
+          constructor(params: { name: string }) {}
+        }
+      `);
+
+      generate([sourceFile], { format: false, copyWith: true, equal: true, toString: false });
+
+      const content = fs.readFileSync(path.join(dir, 'person.freezed.ts'), 'utf-8');
+      expect(content).not.toContain('toString(): string');
+      expect(content).toContain('equals(other: unknown)');
+      expect(content).toContain('get with()');
     });
   });
 
@@ -176,7 +223,7 @@ describe('config file — project-wide defaults', () => {
         }
       `);
 
-      generate([sourceFile], { format: true, copyWith: true, equal: true });
+      generate([sourceFile], { format: true, copyWith: true, equal: true, toString: true });
 
       const content = fs.readFileSync(path.join(dir, 'person.freezed.ts'), 'utf-8');
       // Formatted output uses standard TypeScript formatting
