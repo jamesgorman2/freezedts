@@ -57,6 +57,7 @@ export function resolveClassOptions(
   return {
     copyWith: cls.copyWith ?? config.copyWith,
     equal: cls.equal ?? config.equal,
+    // Cannot use ?? because Object.prototype.toString would always be truthy
     toString: Object.hasOwn(cls, 'toString') ? cls.toString! : config.toString,
   };
 }
