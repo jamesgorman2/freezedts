@@ -189,7 +189,7 @@ function emitClassBody(cls: ParsedFreezedClass): string {
   const methods: string[] = [];
   if (cls.copyWith !== false) methods.push(emitWithGetter(cls));
   if (cls.equal !== false) methods.push(emitEqualsMethod(cls));
-  methods.push(emitToStringMethod(cls));
+  if (cls.toString !== false) methods.push(emitToStringMethod(cls));
 
   return `export abstract class ${cls.generatedClassName} {
 ${readonlyFields}
