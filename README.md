@@ -1,6 +1,8 @@
 # freezedts
 
-Immutable class generation for TypeScript — deep copying, value equality, and runtime immutability via decorators and code generation.
+[![npm version](https://badge.fury.io/js/freezedts.svg)](https://www.npmjs.com/package/freezedts)
+
+Immutable class generation for [TypeScript](https://github.com/Microsoft/TypeScript) — deep copying, value equality, and runtime immutability via decorators and code generation.
 
 A TypeScript port of Dart's [freezed](https://github.com/rrousselGit/freezed) package by Remi Rousselet.
 
