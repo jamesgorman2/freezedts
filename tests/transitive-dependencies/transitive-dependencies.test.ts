@@ -4,8 +4,8 @@ import * as path from 'node:path';
 
 beforeAll(() => {
   generate([
-    path.resolve('tests/mixed-imports/fixtures/address.ts'),
-    path.resolve('tests/mixed-imports/fixtures/person.ts'),
+    path.resolve('tests/transitive-dependencies/fixtures/address.ts'),
+    path.resolve('tests/transitive-dependencies/fixtures/person.ts'),
   ]);
 });
 
