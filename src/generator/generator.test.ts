@@ -113,7 +113,7 @@ describe('generate', () => {
       );
 
       // Should contain the deep copy helper
-      expect(output).toContain('__freezedWith');
+      expect(output).toContain('createWithProxy');
       // Should contain getter, not method
       expect(output).toContain('get with()');
       expect(output).not.toContain('with(overrides:');

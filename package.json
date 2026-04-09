@@ -1,6 +1,6 @@
 {
   "name": "freezedts",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "type": "module",
   "description": "Immutable class management for TypeScript via code generation",
   "author": { "name": "James  Gorman" },

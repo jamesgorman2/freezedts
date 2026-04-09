@@ -10,118 +10,24 @@ export function emitFreezedFile(classes: ParsedFreezedClass[]): string {
       return !PRIMITIVE_TYPES.has(baseType);
     })
   );
-
-  const helpers: string[] = [];
-  if (needsWith) helpers.push(emitDeepCopyHelper());
-  if (needsDeepEqual) helpers.push(emitDeepEqualHelper());
   const needsFreeze = classes.some(c =>
     c.properties.some(p => {
       const baseType = p.type.replace(/\s*\|\s*undefined$/, '').trim();
       return !PRIMITIVE_TYPES.has(baseType);
     })
   );
-  if (needsFreeze) helpers.push(emitDeepFreezeHelper());
+
+  const runtimeImports: string[] = [];
+  if (needsWith) runtimeImports.push('createWithProxy');
+  if (needsDeepEqual) runtimeImports.push('deepEqual');
+  if (needsFreeze) runtimeImports.push('deepFreeze');
+
+  const importLine = runtimeImports.length > 0
+    ? `\nimport { ${runtimeImports.join(', ')} } from 'freezedts/runtime';\n`
+    : '';
 
   const sections = classes.map(emitClass);
-  return HEADER + '\n' + helpers.join('\n\n') + '\n\n' + sections.join('\n\n') + '\n';
-}
-
-function emitDeepCopyHelper(): string {
-  return `const __freezedWith = (() => {
-  const OPTS = Symbol.for('freezedts:options');
-  const isFz = (v: unknown): boolean =>
-    v != null && typeof v === 'object' &&
-    typeof (v as any).constructor === 'function' &&
-    OPTS in (v as any).constructor;
-  const copy = (obj: any, over: any): any => {
-    const C = obj.constructor as new (p: any) => any;
-    const p: any = {};
-    for (const k of Object.keys(obj)) p[k] = (obj as any)[k];
-    return new C({ ...p, ...over });
-  };
-  const deep = (root: any, path: string[], over: any): any => {
-    if (!path.length) return copy(root, over);
-    const [h, ...rest] = path;
-    return copy(root, { [h]: deep(root[h], rest, over) });
-  };
-  const px = (root: any, path: string[]): any =>
-    new Proxy((() => {}) as any, {
-      apply: (_, __, a) => deep(root, path, a[0] ?? {}),
-      get: (_, p) => {
-        if (typeof p !== 'string') return undefined;
-        let c: any = root;
-        for (const s of path) c = c[s];
-        return isFz(c[p]) ? px(root, [...path, p]) : undefined;
-      },
-    });
-  return (instance: any) => px(instance, []);
-})();`;
-}
-
-function emitDeepEqualHelper(): string {
-  return `const __freezedDeepEqual = (a: unknown, b: unknown): boolean => {
-  if (a === b) return true;
-  if (a == null || b == null) return a === b;
-  if (typeof a !== typeof b) return false;
-  if (typeof a === 'number') return Number.isNaN(a) && Number.isNaN(b as number);
-  if (typeof a !== 'object') return false;
-  if (typeof (a as any).equals === 'function' && a.constructor === b.constructor) {
-    return (a as any).equals(b);
-  }
-  if (Array.isArray(a)) {
-    if (!Array.isArray(b) || a.length !== b.length) return false;
-    return a.every((v, i) => __freezedDeepEqual(v, (b as any[])[i]));
-  }
-  if (a instanceof Map) {
-    if (!(b instanceof Map) || a.size !== b.size) return false;
-    for (const [k, v] of a) {
-      if (!b.has(k) || !__freezedDeepEqual(v, b.get(k))) return false;
-    }
-    return true;
-  }
-  if (a instanceof Set) {
-    if (!(b instanceof Set) || a.size !== b.size) return false;
-    for (const v of a) if (!b.has(v)) return false;
-    return true;
-  }
-  const keysA = Object.keys(a);
-  const keysB = Object.keys(b as object);
-  if (keysA.length !== keysB.length) return false;
-  return keysA.every(k => __freezedDeepEqual((a as any)[k], (b as any)[k]));
-};`;
-}
-
-function emitDeepFreezeHelper(): string {
-  return `const __freezedDeepFreeze = <T>(value: T): T => {
-  if (value == null || typeof value !== 'object') return value;
-  if (Object.isFrozen(value)) return value;
-  if (Array.isArray(value)) {
-    for (let i = 0; i < value.length; i++) __freezedDeepFreeze(value[i]);
-    Object.freeze(value);
-    return value;
-  }
-  if (value instanceof Map) {
-    const _throw = () => { throw new TypeError('Cannot mutate a frozen Map'); };
-    value.set = _throw as any;
-    value.delete = _throw as any;
-    value.clear = _throw as any;
-    value.forEach((v, k) => { __freezedDeepFreeze(k); __freezedDeepFreeze(v); });
-    Object.freeze(value);
-    return value;
-  }
-  if (value instanceof Set) {
-    const _throw = () => { throw new TypeError('Cannot mutate a frozen Set'); };
-    value.add = _throw as any;
-    value.delete = _throw as any;
-    value.clear = _throw as any;
-    value.forEach((v) => __freezedDeepFreeze(v));
-    Object.freeze(value);
-    return value;
-  }
-  for (const key of Object.keys(value)) __freezedDeepFreeze((value as any)[key]);
-  Object.freeze(value);
-  return value;
-};`;
+  return HEADER + importLine + '\n' + sections.join('\n\n') + '\n';
 }
 
 const PRIMITIVE_TYPES = new Set(['string', 'number', 'boolean', 'bigint']);
@@ -182,7 +88,7 @@ function emitClassBody(cls: ParsedFreezedClass): string {
       if (PRIMITIVE_TYPES.has(baseType)) {
         return `    this.${p.name} = ${paramsVar}.${p.name};`;
       }
-      return `    this.${p.name} = __freezedDeepFreeze(${paramsVar}.${p.name});`;
+      return `    this.${p.name} = deepFreeze(${paramsVar}.${p.name});`;
     })
     .join('\n');
 
@@ -238,7 +144,7 @@ function emitFieldConfigBlock(cls: ParsedFreezedClass): string {
 
 function emitWithGetter(cls: ParsedFreezedClass): string {
   return `  get with(): ${cls.className}With<this> {
-    return __freezedWith(this);
+    return createWithProxy(this);
   }`;
 }
 
@@ -261,7 +167,7 @@ function emitEqualsMethod(cls: ParsedFreezedClass): string {
       if (PRIMITIVE_TYPES.has(baseType)) {
         return `this.${p.name} === other.${p.name}`;
       }
-      return `__freezedDeepEqual(this.${p.name}, other.${p.name})`;
+      return `deepEqual(this.${p.name}, other.${p.name})`;
     }
     if (p.isFreezed) {
       if (p.optional) {
