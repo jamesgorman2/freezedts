@@ -1,6 +1,7 @@
 # freezedts
 
 [![npm version](https://badge.fury.io/js/freezedts.svg)](https://www.npmjs.com/package/freezedts)
+[![Node.js CI](https://github.com/jamesgorman2/freezedts/actions/workflows/node.js.yml/badge.svg?branch=main)](https://github.com/jamesgorman2/freezedts/actions/workflows/node.js.yml)
 
 Immutable class generation for [TypeScript](https://github.com/Microsoft/TypeScript) — deep copying, value equality, and runtime immutability via decorators and code generation.
 
