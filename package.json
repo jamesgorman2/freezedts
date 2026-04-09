@@ -2,6 +2,7 @@
   "name": "freezedts",
   "version": "0.12.0",
   "type": "module",
+  "engines": { "node": ">=22" },
   "description": "Immutable class management for TypeScript via code generation",
   "author": { "name": "James  Gorman" },
   "homepage": "https://github.com/jamesgorman2/freezedts",
