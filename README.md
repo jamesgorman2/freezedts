@@ -59,10 +59,12 @@ The generator produces `$Person` with:
 
 ```bash
 npm install freezedts
+npm install -D freezedts-cli
 ```
 
-`freezedts` must be a runtime dependency. It has a small runtime footprint and
-no transient runtime dependencies.
+`freezedts` is the runtime — add it as a production dependency. It has zero transitive dependencies.
+
+`freezedts-cli` is the code generator — add it as a dev dependency. It depends on `ts-morph` for AST parsing.
 
 **Requirements:** TypeScript 6, ESM, TC39 stage 3 decorators.
 
@@ -80,8 +82,8 @@ npx freezedts --watch
 npx freezedts -w src
 
 # Use a custom config file
-npx freezedts --config path/to/freezedts.config.yaml
-npx freezedts -c custom.yaml -w src
+npx freezedts --config path/to/freezedts.config.json
+npx freezedts -c custom.json -w src
 ```
 
 The generator scans for `.ts` files containing `@freezed()` classes and produces `.freezed.ts` files alongside them. 
@@ -268,42 +270,39 @@ Disable generation of specific methods via the `@freezed()` decorator:
 
 ### Project-Wide Configuration
 
-Create a `freezedts.config.yaml` in your project root:
+Create a `freezedts.config.json` in your project root:
 
-```yaml
-freezed:
-  options:
-    # Format generated .freezed.ts files (can slow down generation)
-    format: true
-
-    # Disable with() generation for the entire project
-    copyWith: false
-
-    # Disable equals() generation for the entire project
-    equal: false
-
-    # Disable toString() generation for the entire project
-    toString: false
+```json
+{
+  "freezed": {
+    "options": {
+      "format": true,
+      "copyWith": false,
+      "equal": false,
+      "toString": false
+    }
+  }
+}
 ```
 
 All options default to `true` (enabled) except `format` which defaults to `false`.
 
 ### Resolution Order
 
-Per-class `@freezed()` options override project-wide `freezedts.config.yaml` defaults. If neither specifies a value, the built-in default applies (all features enabled).
+Per-class `@freezed()` options override project-wide `freezedts.config.json` defaults. If neither specifies a value, the built-in default applies (all features enabled).
 
 ```
-per-class @freezed()  →  freezedts.config.yaml  →  built-in defaults
+per-class @freezed()  →  freezedts.config.json  →  built-in defaults
     (highest priority)                              (lowest priority)
 ```
 
 ## Building the Library
 
 ```bash
-# Install dependencies
+# Install dependencies (sets up workspace symlinks)
 npm install
 
-# Build TypeScript to dist/
+# Build both packages
 npm run build
 
 # Run tests
@@ -316,7 +315,10 @@ npm run generate
 npm run test:watch
 ```
 
-The project uses:
+The project is structured as an npm workspace with two packages:
+- **freezedts** — runtime library (zero dependencies)
+- **freezedts-cli** — code generator (depends on ts-morph)
+
+Other tools:
 - **TypeScript 6** with ES2022 target and Node16 module resolution
 - **bun:test** for testing
-- **ts-morph** for AST parsing and code generation
