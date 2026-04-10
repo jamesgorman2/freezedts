@@ -1,5 +1,10 @@
 import { SourceFile, Type, Symbol as MorphSymbol, Node, SyntaxKind, Decorator, ObjectLiteralExpression } from 'ts-morph';
 
+export interface TypeImport {
+  name: string;
+  absolutePath: string;
+}
+
 export interface ParsedProperty {
   name: string;
   type: string;
@@ -9,8 +14,7 @@ export interface ParsedProperty {
   hasMessage: boolean;
   isFreezed: boolean;
   importFrom?: string;
-  importSource?: string;
-  isTypeOnly?: boolean;
+  typeImports?: TypeImport[];
 }
 
 export interface ParsedFreezedClass {
@@ -71,7 +75,7 @@ export function parseFreezedClasses(sourceFile: SourceFile): ParseResult {
     const equalityMode = extractEqualityMode(decorator);
     const { copyWith, equal, toString: toStringOpt } = extractGenerationOptions(decorator);
     const paramType = paramsParam.getType();
-    const properties = extractProperties(paramType, defaultFields, assertFields, messageFields);
+    const properties = extractProperties(paramType, sourceFile, defaultFields, assertFields, messageFields);
 
     results.push({
       className,
@@ -187,31 +191,59 @@ function extractGenerationOptions(decorator: Decorator): { copyWith?: boolean; e
   };
 }
 
+function buildSourceImportMap(sourceFile: SourceFile): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const importDecl of sourceFile.getImportDeclarations()) {
+    const resolved = importDecl.getModuleSpecifierSourceFile();
+    if (!resolved) continue;
+    const absolutePath = resolved.getFilePath();
+    for (const named of importDecl.getNamedImports()) {
+      const localName = named.getAliasNode()?.getText() ?? named.getName();
+      map.set(localName, absolutePath);
+    }
+  }
+  return map;
+}
+
+export function extractTypeIdentifiers(typeText: string): string[] {
+  const matches = typeText.match(/\b[A-Z]\w*/g) ?? [];
+  return [...new Set(matches)];
+}
+
 function extractProperties(
   type: Type,
+  sourceFile: SourceFile,
   defaultFields: Set<string>,
   assertFields: Set<string>,
   messageFields: Set<string>,
 ): ParsedProperty[] {
+  const importMap = buildSourceImportMap(sourceFile);
+
   return type.getProperties().map((prop: MorphSymbol) => {
-    const propType = prop.getValueDeclaration()?.getType();
     const isOptional = prop.isOptional();
+    const decl = prop.getValueDeclaration();
 
-    let typeText = propType?.getText() ?? 'unknown';
-
-    // Extract import source path before stripping import(...) prefixes
-    let importSource: string | undefined;
-    const importMatch = typeText.match(/import\("([^"]+)"\)\./);
-    if (importMatch) {
-      importSource = importMatch[1];
+    // Prefer literal type text from the source AST (preserves aliases and generics)
+    let typeText: string;
+    const typeNode = decl && Node.isPropertySignature(decl) ? decl.getTypeNode() : undefined;
+    if (typeNode) {
+      typeText = typeNode.getText();
+    } else {
+      // Fallback: use resolved type with import() prefix stripping
+      const propType = decl?.getType();
+      typeText = propType?.getText() ?? 'unknown';
+      typeText = typeText.replace(/import\(.*?\)\./g, '');
     }
 
-    typeText = typeText.replace(/import\(.*?\)\./g, '');
-
-    // Type-only if the resolved type is not a class or enum (i.e. type alias or interface)
-    const isTypeOnly = importSource && propType
-      ? !propType.isClass() && !propType.isEnum()
-      : undefined;
+    // Build typeImports: cross-reference type identifiers with source file imports
+    const identifiers = extractTypeIdentifiers(typeText);
+    const typeImports: TypeImport[] = [];
+    for (const id of identifiers) {
+      const absolutePath = importMap.get(id);
+      if (absolutePath) {
+        typeImports.push({ name: id, absolutePath });
+      }
+    }
 
     const name = prop.getName();
     return {
@@ -222,8 +254,7 @@ function extractProperties(
       hasAssert: assertFields.has(name),
       hasMessage: messageFields.has(name),
       isFreezed: false,
-      ...(importSource !== undefined && { importSource }),
-      ...(isTypeOnly !== undefined && { isTypeOnly }),
+      ...(typeImports.length > 0 && { typeImports }),
     };
   });
 }

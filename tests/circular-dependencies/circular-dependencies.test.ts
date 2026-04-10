@@ -16,7 +16,7 @@ describe('circular dependencies', () => {
       path.resolve('tests/circular-dependencies/fixtures/person.freezed.ts'),
       'utf-8',
     );
-    expect(generated).toContain("import { Animal } from './animal.js'");
+    expect(generated).toContain("import type { Animal } from './animal.js'");
   });
 
   it('pet is an Animal', () => {
@@ -32,7 +32,7 @@ describe('circular dependencies', () => {
       path.resolve('tests/circular-dependencies/fixtures/animal.freezed.ts'),
       'utf-8',
     );
-    expect(generated).toContain("import { Person } from './person.js'");
+    expect(generated).toContain("import type { Person } from './person.js'");
   });
 
   it('owner is a Person', () => {

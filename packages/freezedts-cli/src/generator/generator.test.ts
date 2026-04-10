@@ -454,7 +454,7 @@ describe('generate', () => {
       expect(outerContent).toContain('inner: InnerWith<Self>;');
 
       // Must import Inner from the source file
-      expect(outerContent).toContain("import { Inner } from './inner.js'");
+      expect(outerContent).toContain("import type { Inner } from './inner.js'");
       // Must import InnerWith from the generated file
       expect(outerContent).toContain("from './inner.freezed.js'");
       expect(outerContent).toContain('InnerWith');

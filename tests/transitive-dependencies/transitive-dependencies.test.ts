@@ -148,7 +148,7 @@ describe('mixed freezed and non-freezed imports', () => {
       path.resolve('tests/transitive-dependencies/fixtures/person.freezed.ts'),
       'utf-8',
     );
-    expect(generated).toContain("import { PhoneNumber } from './phonenumber.js'");
+    expect(generated).toContain("import type { PhoneNumber } from './phonenumber.js'");
   });
 
   it('imports Address from the source file, not the freezed file', () => {
@@ -156,7 +156,7 @@ describe('mixed freezed and non-freezed imports', () => {
       path.resolve('tests/transitive-dependencies/fixtures/person.freezed.ts'),
       'utf-8',
     );
-    expect(generated).toContain("import { Address } from './address.js'");
+    expect(generated).toContain("import type { Address } from './address.js'");
   });
 
   it('uses Address (not $Address) for property types', () => {

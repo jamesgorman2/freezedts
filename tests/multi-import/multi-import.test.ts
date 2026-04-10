@@ -11,18 +11,11 @@ beforeAll(() => {
 });
 
 describe('multi-import', () => {
-  it('Person imports only Cat and Dog', () => {
+  it('Person imports Cat, Dog, and PreferredSize from the same module', () => {
     const generated = fs.readFileSync(
       path.resolve('tests/multi-import/fixtures/person.freezed.ts'),
       'utf-8',
     );
-    expect(generated).toContain("import { Cat, Dog } from './animal.js'");
-  });
-  it('Person imports type PreferredSize', () => {
-    const generated = fs.readFileSync(
-      path.resolve('tests/multi-import/fixtures/person.freezed.ts'),
-      'utf-8',
-    );
-    expect(generated).toContain("import type { PreferredSize } from './animal.js'");
+    expect(generated).toContain("import type { Cat, Dog, PreferredSize } from './animal.js'");
   });
 });
