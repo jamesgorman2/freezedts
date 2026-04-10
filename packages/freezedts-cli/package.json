@@ -1,0 +1,27 @@
+{
+  "name": "freezedts-cli",
+  "version": "0.13.0",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "description": "Code generator CLI for freezedts",
+  "author": { "name": "James  Gorman" },
+  "homepage": "https://github.com/jamesgorman2/freezedts",
+  "bugs": { "url": "https://github.com/jamesgorman2/freezedts/issues" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jamesgorman2/freezedts.git"
+  },
+  "bin": {
+    "freezedts": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc"
+  },
+  "files": ["dist", "!dist/**/*.test.*"],
+  "keywords": ["immutable", "codegen", "decorator", "typescript", "cli"],
+  "license": "MIT",
+  "dependencies": {
+    "freezedts": "^0.13.0",
+    "ts-morph": "^27.0.2"
+  }
+}

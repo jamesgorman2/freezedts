@@ -1,0 +1,33 @@
+{
+  "name": "freezedts",
+  "version": "0.13.0",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "description": "Immutable class management for TypeScript via code generation",
+  "author": { "name": "James  Gorman" },
+  "homepage": "https://github.com/jamesgorman2/freezedts",
+  "bugs": { "url": "https://github.com/jamesgorman2/freezedts/issues" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jamesgorman2/freezedts.git"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./runtime": {
+      "import": "./dist/runtime/index.js",
+      "types": "./dist/runtime/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc"
+  },
+  "files": ["dist", "!dist/**/*.test.*"],
+  "keywords": ["immutable", "codegen", "decorator", "typescript"],
+  "license": "MIT",
+  "dependencies": {}
+}
