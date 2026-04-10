@@ -19,7 +19,7 @@ describe('transient type imports', () => {
 
   it('imports the type alias name, not the underlying type name', () => {
     const generated = readGenerated();
-    expect(generated).toMatch(/import[^;]*Feature/);
+    expect(generated).toContain("import type { Feature } from './external/types.js'");
     expect(generated).not.toMatch(/import[^;]*BaseModel/);
   });
 

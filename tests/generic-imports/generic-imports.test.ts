@@ -21,12 +21,12 @@ describe('importing generic types', () => {
 
   it('imports the outer generic type', () => {
     const generated = readGenerated();
-    expect(generated).toMatch(/import type \{[^}]*\bWrapper\b[^}]*\} from '\.\/wrapper\.js'/);
+    expect(generated).toContain("import type { Wrapper } from './wrapper.js';");
   });
 
   it('imports the generic type parameter', () => {
     const generated = readGenerated();
-    expect(generated).toMatch(/import type \{[^}]*\bItem\b[^}]*\} from '\.\/item\.js'/);
+    expect(generated).toContain("import type { Item } from './item.js';");
   });
 
   it('preserves A<B> in property declarations', () => {
@@ -43,13 +43,13 @@ describe('importing generic types', () => {
 
   it('imports the multi-param generic type', () => {
     const generated = readGenerated();
-    expect(generated).toMatch(/import type \{[^}]*\bPair\b[^}]*\} from '\.\/pair\.js'/);
+    expect(generated).toContain("import type { Pair } from './pair.js';");
   });
 
   it('imports both type parameters of A<B, C>', () => {
     const generated = readGenerated();
-    expect(generated).toMatch(/import type \{[^}]*\bItem\b[^}]*\} from '\.\/item\.js'/);
-    expect(generated).toMatch(/import type \{[^}]*\bTag\b[^}]*\} from '\.\/tag\.js'/);
+    expect(generated).toContain("import type { Item } from './item.js';");
+    expect(generated).toContain("import type { Tag } from './tag.js';");
   });
 
   it('preserves A<B, C> in property declarations', () => {
@@ -61,9 +61,9 @@ describe('importing generic types', () => {
 
   it('imports all types from nested generics A<B<C>>', () => {
     const generated = readGenerated();
-    expect(generated).toMatch(/import type \{[^}]*\bWrapper\b[^}]*\} from '\.\/wrapper\.js'/);
-    expect(generated).toMatch(/import type \{[^}]*\bBox\b[^}]*\} from '\.\/box\.js'/);
-    expect(generated).toMatch(/import type \{[^}]*\bItem\b[^}]*\} from '\.\/item\.js'/);
+    expect(generated).toContain("import type { Wrapper } from './wrapper.js';");
+    expect(generated).toContain("import type { Box } from './box.js';");
+    expect(generated).toContain("import type { Item } from './item.js';");
   });
 
   it('preserves A<B<C>> in property declarations', () => {
@@ -75,10 +75,10 @@ describe('importing generic types', () => {
 
   it('imports all types from A<B<C>, D>', () => {
     const generated = readGenerated();
-    expect(generated).toMatch(/import type \{[^}]*\bPair\b[^}]*\} from '\.\/pair\.js'/);
-    expect(generated).toMatch(/import type \{[^}]*\bBox\b[^}]*\} from '\.\/box\.js'/);
-    expect(generated).toMatch(/import type \{[^}]*\bItem\b[^}]*\} from '\.\/item\.js'/);
-    expect(generated).toMatch(/import type \{[^}]*\bTag\b[^}]*\} from '\.\/tag\.js'/);
+    expect(generated).toContain("import type { Pair } from './pair.js';");
+    expect(generated).toContain("import type { Box } from './box.js';");
+    expect(generated).toContain("import type { Item } from './item.js';");
+    expect(generated).toContain("import type { Tag } from './tag.js';");
   });
 
   it('preserves A<B<C>, D> in property declarations', () => {

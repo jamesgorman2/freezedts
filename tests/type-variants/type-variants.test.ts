@@ -70,7 +70,7 @@ describe('arrays, unions, and transitive types in imports', () => {
   it('imports same-file freezed types from the source file', () => {
     const generated = readGenerated();
     // Canvas references Stroke (same-file @freezed) — must import from source
-    expect(generated).toMatch(/import type \{[^}]*Stroke[^}]*\} from '\.\/canvas\.js'/);
+    expect(generated).toContain("import type { Stroke } from './canvas.js';");
   });
 
   it('preserves array and union types in property declarations', () => {
