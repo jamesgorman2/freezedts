@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from 'bun:test';
 import * as path from 'node:path';
-import { generate } from '../../src/generator/generator.js';
+import { generate } from '../../packages/freezedts-cli/src/generator/generator.js';
 
 const fixturesDir = path.resolve(import.meta.dirname, 'fixtures');
 

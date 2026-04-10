@@ -1,5 +1,5 @@
 import { beforeAll, describe, it, expect } from 'bun:test';
-import { generate } from '../../src/generator/generator.js';
+import { generate } from '../../packages/freezedts-cli/src/generator/generator.js';
 import * as path from 'node:path';
 
 beforeAll(() => {
