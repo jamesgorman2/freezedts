@@ -1,4 +1,4 @@
-import { freezed } from '../../../src/runtime/freezed.ts';
+import { freezed } from '../../../packages/freezedts/src/runtime/freezed.ts';
 import { AddressFields } from './types.ts';
 import { $Address } from './imported.freezed.ts';
 

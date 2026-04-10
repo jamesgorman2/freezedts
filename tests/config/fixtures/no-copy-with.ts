@@ -1,4 +1,4 @@
-import { freezed } from '../../../src/runtime/freezed.ts';
+import { freezed } from '../../../packages/freezedts/src/runtime/freezed.ts';
 import { $NoCopy } from './no-copy-with.freezed.ts';
 
 @freezed({ copyWith: false })

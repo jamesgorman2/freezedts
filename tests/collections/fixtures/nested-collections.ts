@@ -1,4 +1,4 @@
-import { freezed } from '../../../src/runtime/freezed.ts';
+import { freezed } from '../../../packages/freezedts/src/runtime/freezed.ts';
 import { $Matrix } from './nested-collections.freezed.ts';
 
 @freezed()

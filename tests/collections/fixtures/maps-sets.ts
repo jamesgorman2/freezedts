@@ -1,4 +1,4 @@
-import { freezed } from '../../../src/runtime/freezed.ts';
+import { freezed } from '../../../packages/freezedts/src/runtime/freezed.ts';
 import { $Registry } from './maps-sets.freezed.ts';
 
 @freezed()

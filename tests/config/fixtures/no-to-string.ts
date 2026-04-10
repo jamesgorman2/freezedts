@@ -1,4 +1,4 @@
-import { freezed } from '../../../src/runtime/freezed.ts';
+import { freezed } from '../../../packages/freezedts/src/runtime/freezed.ts';
 import { $NoToString } from './no-to-string.freezed.ts';
 
 @freezed({ toString: false })
