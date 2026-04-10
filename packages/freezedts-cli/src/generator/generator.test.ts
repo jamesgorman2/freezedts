@@ -117,8 +117,8 @@ describe('generate', () => {
       // Should contain getter, not method
       expect(output).toContain('get with()');
       expect(output).not.toContain('with(overrides:');
-      // inner property should use $Inner type (base class reference)
-      expect(output).toContain('inner: $Inner;');
+      // inner property should use Inner type (concrete class reference)
+      expect(output).toContain('inner: Inner;');
     });
   });
 
@@ -446,16 +446,18 @@ describe('generate', () => {
         'utf-8',
       );
 
-      // inner property should use $Inner type (cross-file resolution)
-      expect(outerContent).toContain('inner: $Inner;');
-      expect(outerContent).toContain('readonly inner!: $Inner;');
+      // inner property should use Inner type (cross-file resolution)
+      expect(outerContent).toContain('inner: Inner;');
+      expect(outerContent).toContain('readonly inner!: Inner;');
 
       // With type should include nested inner member
       expect(outerContent).toContain('inner: InnerWith<Self>;');
 
-      // Must import $Inner from the other generated file
+      // Must import Inner from the source file
+      expect(outerContent).toContain("import { Inner } from './inner.js'");
+      // Must import InnerWith from the generated file
       expect(outerContent).toContain("from './inner.freezed.js'");
-      expect(outerContent).toContain('$Inner');
+      expect(outerContent).toContain('InnerWith');
     });
   });
 });

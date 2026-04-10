@@ -138,12 +138,21 @@ export function generate(filePaths: string[], config?: ResolvedConfig): Generate
             const fromAbsolute = parsed.get(sourceFilePath)!.absolutePath;
             const relativePath = path.relative(
               path.dirname(absolutePath),
-              fromAbsolute.replace(/\.ts$/, '.freezed.js'),
+              fromAbsolute.replace(/\.ts$/, '.js'),
             );
             prop.importFrom = relativePath.startsWith('.')
               ? relativePath.replace(/\\/g, '/')
               : './' + relativePath.replace(/\\/g, '/');
           }
+        } else if (prop.importSource && !prop.importFrom) {
+          // Non-freezed type from another file — compute relative import path
+          const relativePath = path.relative(
+            path.dirname(absolutePath),
+            prop.importSource + '.js',
+          );
+          prop.importFrom = relativePath.startsWith('.')
+            ? relativePath.replace(/\\/g, '/')
+            : './' + relativePath.replace(/\\/g, '/');
         }
       }
     }
@@ -168,12 +177,17 @@ export function generate(filePaths: string[], config?: ResolvedConfig): Generate
       const imports = new Map<string, Set<string>>();
       for (const cls of classes) {
         for (const prop of cls.properties) {
-          if (prop.isFreezed && prop.importFrom) {
+          if (prop.importFrom) {
+            const baseType = prop.type.replace(/\s*\|\s*undefined$/, '').trim();
+            // Import the type itself from the source .js file
             if (!imports.has(prop.importFrom)) imports.set(prop.importFrom, new Set());
-            const symbols = imports.get(prop.importFrom)!;
-            symbols.add(`$${prop.type.replace(/\s*\|\s*undefined$/, '').trim()}`);
-            if (cls.copyWith !== false) {
-              symbols.add(`${prop.type.replace(/\s*\|\s*undefined$/, '').trim()}With`);
+            imports.get(prop.importFrom)!.add(baseType);
+
+            // For freezed cross-file types, also import the With type from .freezed.js
+            if (prop.isFreezed && cls.copyWith !== false) {
+              const freezedImportPath = prop.importFrom.replace(/\.js$/, '.freezed.js');
+              if (!imports.has(freezedImportPath)) imports.set(freezedImportPath, new Set());
+              imports.get(freezedImportPath)!.add(`${baseType}With`);
             }
           }
         }

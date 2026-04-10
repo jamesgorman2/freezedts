@@ -106,7 +106,7 @@ describe('emitFreezedFile', () => {
     expect(output).toContain('export type InnerWith<Self> = {');
   });
 
-  it('replaces @freezed property types with $ClassName in params and readonly', () => {
+  it('uses original class name for @freezed property types in params and readonly', () => {
     const classes: ParsedFreezedClass[] = [
       {
         className: 'Inner',
@@ -130,10 +130,10 @@ describe('emitFreezedFile', () => {
     ];
 
     const output = emitFreezedFile(classes);
-    // Params type uses $Inner
-    expect(output).toContain('  inner: $Inner;');
-    // Readonly field uses $Inner
-    expect(output).toContain('  readonly inner!: $Inner;');
+    // Params type uses Inner (the concrete class name)
+    expect(output).toContain('  inner: Inner;');
+    // Readonly field uses Inner
+    expect(output).toContain('  readonly inner!: Inner;');
   });
 
   it('marks optional params with ? in the params type', () => {

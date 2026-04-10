@@ -1,5 +1,7 @@
 import { freezed } from '../../../packages/freezedts/src/runtime/freezed.ts';
-import { Address } from './address.ts';
+import {
+  Address
+} from './address.ts';
 import { PhoneNumber } from './phonenumber.ts';
 import { $Person } from './person.freezed.ts';
 

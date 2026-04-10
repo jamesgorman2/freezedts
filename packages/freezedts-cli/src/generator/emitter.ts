@@ -48,7 +48,7 @@ function emitParamsType(cls: ParsedFreezedClass): string {
   const fields = cls.properties
     .map((p) => {
       const optional = p.optional || p.hasDefault;
-      const type = p.isFreezed ? `$${p.type}` : p.type;
+      const type = p.type;
       return `  ${p.name}${optional ? '?' : ''}: ${type};`;
     })
     .join('\n');
@@ -70,7 +70,7 @@ function emitWithType(cls: ParsedFreezedClass): string {
 function emitClassBody(cls: ParsedFreezedClass): string {
   const readonlyFields = cls.properties
     .map((p) => {
-      let type = p.isFreezed ? `$${p.type}` : p.type;
+      let type = p.type;
       if (p.hasDefault) type = type.replace(/ \| undefined$/, '');
       return `  readonly ${p.name}!: ${type};`;
     })

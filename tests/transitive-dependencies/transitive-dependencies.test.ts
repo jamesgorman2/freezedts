@@ -1,5 +1,6 @@
 import { beforeAll, describe, it, expect } from 'bun:test';
 import { generate } from '../../packages/freezedts-cli/src/generator/generator.js';
+import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 beforeAll(() => {
@@ -140,5 +141,30 @@ describe('mixed freezed and non-freezed imports', () => {
     expect(person.toString()).toContain('Person(');
     expect(person.toString()).toContain('name: Fay');
     expect(person.toString()).toContain('Address(');
+  });
+
+  it('imports PhoneNumber from the source file', () => {
+    const generated = fs.readFileSync(
+      path.resolve('tests/transitive-dependencies/fixtures/person.freezed.ts'),
+      'utf-8',
+    );
+    expect(generated).toContain("import { PhoneNumber } from './phonenumber.js'");
+  });
+
+  it('imports Address from the source file, not the freezed file', () => {
+    const generated = fs.readFileSync(
+      path.resolve('tests/transitive-dependencies/fixtures/person.freezed.ts'),
+      'utf-8',
+    );
+    expect(generated).toContain("import { Address } from './address.js'");
+  });
+
+  it('uses Address (not $Address) for property types', () => {
+    const generated = fs.readFileSync(
+      path.resolve('tests/transitive-dependencies/fixtures/person.freezed.ts'),
+      'utf-8',
+    );
+    expect(generated).toContain('address: Address;');
+    expect(generated).not.toContain('address: $Address;');
   });
 });

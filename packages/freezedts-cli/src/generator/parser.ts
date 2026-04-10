@@ -9,6 +9,7 @@ export interface ParsedProperty {
   hasMessage: boolean;
   isFreezed: boolean;
   importFrom?: string;
+  importSource?: string;
 }
 
 export interface ParsedFreezedClass {
@@ -196,6 +197,14 @@ function extractProperties(
     const isOptional = prop.isOptional();
 
     let typeText = propType?.getText() ?? 'unknown';
+
+    // Extract import source path before stripping import(...) prefixes
+    let importSource: string | undefined;
+    const importMatch = typeText.match(/import\("([^"]+)"\)\./);
+    if (importMatch) {
+      importSource = importMatch[1];
+    }
+
     typeText = typeText.replace(/import\(.*?\)\./g, '');
 
     const name = prop.getName();
@@ -207,6 +216,7 @@ function extractProperties(
       hasAssert: assertFields.has(name),
       hasMessage: messageFields.has(name),
       isFreezed: false,
+      ...(importSource !== undefined && { importSource }),
     };
   });
 }
