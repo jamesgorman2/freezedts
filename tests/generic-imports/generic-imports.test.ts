@@ -100,3 +100,122 @@ describe('importing generic types', () => {
     }
   });
 });
+
+describe('generic imports -- runtime behavior', () => {
+  it('constructs with generic interface values', async () => {
+    const { Container } = await import('./fixtures/container.ts');
+    const c = new Container({
+      wrapped: { value: { id: 'i1', name: 'item1' }, label: 'w' },
+      items: [{ value: { id: 'i2', name: 'item2' }, label: 'arr' }],
+      pair: { first: { id: 'i3', name: 'x' }, second: { key: 'k', value: 'v' } },
+      nested: { value: { content: { id: 'deep', name: 'nested' } }, label: 'n' },
+      complex: { first: { content: { id: 'c1', name: 'boxed' } }, second: { key: 'ck', value: 'cv' } },
+      label: 'test',
+    });
+    expect(c.wrapped.value.id).toBe('i1');
+    expect(c.pair.first.name).toBe('x');
+    expect(c.nested.value.content.id).toBe('deep');
+  });
+
+  it('instance is frozen', async () => {
+    const { Container } = await import('./fixtures/container.ts');
+    const c = new Container({
+      wrapped: { value: { id: '1', name: 'a' }, label: 'w' },
+      items: [],
+      pair: { first: { id: '2', name: 'b' }, second: { key: 'k', value: 'v' } },
+      nested: { value: { content: { id: '3', name: 'c' } }, label: 'n' },
+      complex: { first: { content: { id: '4', name: 'd' } }, second: { key: 'k', value: 'v' } },
+      label: 'test',
+    });
+    expect(Object.isFrozen(c)).toBe(true);
+  });
+
+  it('nested generic values are deep-frozen', async () => {
+    const { Container } = await import('./fixtures/container.ts');
+    const c = new Container({
+      wrapped: { value: { id: '1', name: 'a' }, label: 'w' },
+      items: [],
+      pair: { first: { id: '2', name: 'b' }, second: { key: 'k', value: 'v' } },
+      nested: { value: { content: { id: '3', name: 'c' } }, label: 'n' },
+      complex: { first: { content: { id: '4', name: 'd' } }, second: { key: 'k', value: 'v' } },
+      label: 'test',
+    });
+    expect(Object.isFrozen(c.wrapped)).toBe(true);
+    expect(Object.isFrozen(c.pair)).toBe(true);
+    expect(Object.isFrozen(c.nested)).toBe(true);
+    expect(Object.isFrozen(c.nested.value)).toBe(true);
+    expect(Object.isFrozen(c.nested.value.content)).toBe(true);
+  });
+
+  it('array of generic values is frozen', async () => {
+    const { Container } = await import('./fixtures/container.ts');
+    const c = new Container({
+      wrapped: { value: { id: '1', name: 'a' }, label: 'w' },
+      items: [{ value: { id: '2', name: 'b' }, label: 'x' }],
+      pair: { first: { id: '3', name: 'c' }, second: { key: 'k', value: 'v' } },
+      nested: { value: { content: { id: '4', name: 'd' } }, label: 'n' },
+      complex: { first: { content: { id: '5', name: 'e' } }, second: { key: 'k', value: 'v' } },
+      label: 'test',
+    });
+    expect(Object.isFrozen(c.items)).toBe(true);
+    expect(() => (c.items as any[]).push({})).toThrow();
+  });
+
+  it('equals returns true for identical generic values', async () => {
+    const { Container } = await import('./fixtures/container.ts');
+    const params = {
+      wrapped: { value: { id: '1', name: 'a' }, label: 'w' },
+      items: [{ value: { id: '2', name: 'b' }, label: 'x' }],
+      pair: { first: { id: '3', name: 'c' }, second: { key: 'k', value: 'v' } },
+      nested: { value: { content: { id: '4', name: 'd' } }, label: 'n' },
+      complex: { first: { content: { id: '5', name: 'e' } }, second: { key: 'k', value: 'v' } },
+      label: 'test',
+    };
+    const a = new Container(params);
+    const b = new Container(params);
+    expect(a.equals(b)).toBe(true);
+  });
+
+  it('equals detects difference in nested generic', async () => {
+    const { Container } = await import('./fixtures/container.ts');
+    const base = {
+      wrapped: { value: { id: '1', name: 'a' }, label: 'w' },
+      items: [],
+      pair: { first: { id: '2', name: 'b' }, second: { key: 'k', value: 'v' } },
+      complex: { first: { content: { id: '4', name: 'd' } }, second: { key: 'k', value: 'v' } },
+      label: 'test',
+    };
+    const a = new Container({ ...base, nested: { value: { content: { id: 'x', name: 'n' } }, label: 'n' } });
+    const b = new Container({ ...base, nested: { value: { content: { id: 'y', name: 'n' } }, label: 'n' } });
+    expect(a.equals(b)).toBe(false);
+  });
+
+  it('with() replaces a generic field', async () => {
+    const { Container } = await import('./fixtures/container.ts');
+    const c = new Container({
+      wrapped: { value: { id: '1', name: 'a' }, label: 'w' },
+      items: [],
+      pair: { first: { id: '2', name: 'b' }, second: { key: 'k', value: 'v' } },
+      nested: { value: { content: { id: '3', name: 'c' } }, label: 'n' },
+      complex: { first: { content: { id: '4', name: 'd' } }, second: { key: 'k', value: 'v' } },
+      label: 'old',
+    });
+    const c2 = c.with({ label: 'new' });
+    expect(c2.label).toBe('new');
+    expect(c.label).toBe('old');
+    expect(c2).not.toBe(c);
+  });
+
+  it('toString includes generic field content', async () => {
+    const { Container } = await import('./fixtures/container.ts');
+    const c = new Container({
+      wrapped: { value: { id: '1', name: 'a' }, label: 'w' },
+      items: [],
+      pair: { first: { id: '2', name: 'b' }, second: { key: 'k', value: 'v' } },
+      nested: { value: { content: { id: '3', name: 'c' } }, label: 'n' },
+      complex: { first: { content: { id: '4', name: 'd' } }, second: { key: 'k', value: 'v' } },
+      label: 'test',
+    });
+    expect(c.toString()).toContain('Container(');
+  });
+});
