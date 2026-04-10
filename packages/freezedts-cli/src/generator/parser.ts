@@ -10,6 +10,7 @@ export interface ParsedProperty {
   isFreezed: boolean;
   importFrom?: string;
   importSource?: string;
+  isTypeOnly?: boolean;
 }
 
 export interface ParsedFreezedClass {
@@ -207,6 +208,11 @@ function extractProperties(
 
     typeText = typeText.replace(/import\(.*?\)\./g, '');
 
+    // Type-only if the resolved type is not a class or enum (i.e. type alias or interface)
+    const isTypeOnly = importSource && propType
+      ? !propType.isClass() && !propType.isEnum()
+      : undefined;
+
     const name = prop.getName();
     return {
       name,
@@ -217,6 +223,7 @@ function extractProperties(
       hasMessage: messageFields.has(name),
       isFreezed: false,
       ...(importSource !== undefined && { importSource }),
+      ...(isTypeOnly !== undefined && { isTypeOnly }),
     };
   });
 }

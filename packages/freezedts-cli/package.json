@@ -1,6 +1,6 @@
 {
   "name": "freezedts-cli",
-  "version": "0.13.2",
+  "version": "0.13.3",
   "type": "module",
   "engines": { "node": ">=22" },
   "description": "Code generator CLI for freezedts",
