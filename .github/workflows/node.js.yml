@@ -30,6 +30,6 @@ jobs:
       uses: oven-sh/setup-bun@v2
       with:
         bun-version: latest
-    - run: bun add -d @types/bun
-    - run: npm run build --if-present
+    - run: npm install
+    - run: npm run build
     - run: npm test
