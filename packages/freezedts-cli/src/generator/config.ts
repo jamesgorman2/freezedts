@@ -1,5 +1,4 @@
 import * as fs from 'node:fs';
-import { parse as parseYaml } from 'yaml';
 
 export interface ResolvedConfig {
   format: boolean;
@@ -36,9 +35,9 @@ export function loadConfig(configPath: string): ResolvedConfig {
 
   let parsed: FreezedConfigFile | null;
   try {
-    parsed = parseYaml(raw) as FreezedConfigFile | null;
+    parsed = JSON.parse(raw) as FreezedConfigFile | null;
   } catch {
-    throw new Error(`freezedts: invalid YAML in config file: ${configPath}`);
+    throw new Error(`freezedts: invalid JSON in config file: ${configPath}`);
   }
   const options = parsed?.freezed?.options;
 

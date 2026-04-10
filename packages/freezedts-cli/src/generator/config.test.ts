@@ -17,7 +17,7 @@ function withTempDir(fn: (dir: string) => void | Promise<void>) {
 describe('loadConfig', () => {
   it('returns built-in defaults when no config file exists', () => {
     withTempDir((dir) => {
-      const config = loadConfig(path.join(dir, 'freezedts.config.yaml'));
+      const config = loadConfig(path.join(dir, 'freezedts.config.json'));
       expect(config).toEqual({
         format: false,
         copyWith: true,
@@ -27,10 +27,10 @@ describe('loadConfig', () => {
     });
   });
 
-  it('reads copyWith: false from yaml config', () => {
+  it('reads copyWith: false from json config', () => {
     withTempDir((dir) => {
-      const configPath = path.join(dir, 'freezedts.config.yaml');
-      fs.writeFileSync(configPath, `freezed:\n  options:\n    copyWith: false\n`);
+      const configPath = path.join(dir, 'freezedts.config.json');
+      fs.writeFileSync(configPath, JSON.stringify({ freezed: { options: { copyWith: false } } }));
 
       const config = loadConfig(configPath);
       expect(config.copyWith).toBe(false);
@@ -39,10 +39,10 @@ describe('loadConfig', () => {
     });
   });
 
-  it('reads equal: false from yaml config', () => {
+  it('reads equal: false from json config', () => {
     withTempDir((dir) => {
-      const configPath = path.join(dir, 'freezedts.config.yaml');
-      fs.writeFileSync(configPath, `freezed:\n  options:\n    equal: false\n`);
+      const configPath = path.join(dir, 'freezedts.config.json');
+      fs.writeFileSync(configPath, JSON.stringify({ freezed: { options: { equal: false } } }));
 
       const config = loadConfig(configPath);
       expect(config.equal).toBe(false);
@@ -50,10 +50,10 @@ describe('loadConfig', () => {
     });
   });
 
-  it('reads toString: false from yaml config', () => {
+  it('reads toString: false from json config', () => {
     withTempDir((dir) => {
-      const configPath = path.join(dir, 'freezedts.config.yaml');
-      fs.writeFileSync(configPath, `freezed:\n  options:\n    toString: false\n`);
+      const configPath = path.join(dir, 'freezedts.config.json');
+      fs.writeFileSync(configPath, JSON.stringify({ freezed: { options: { toString: false } } }));
 
       const config = loadConfig(configPath);
       expect(config.toString).toBe(false);
@@ -62,10 +62,10 @@ describe('loadConfig', () => {
     });
   });
 
-  it('reads format: true from yaml config', () => {
+  it('reads format: true from json config', () => {
     withTempDir((dir) => {
-      const configPath = path.join(dir, 'freezedts.config.yaml');
-      fs.writeFileSync(configPath, `freezed:\n  options:\n    format: true\n`);
+      const configPath = path.join(dir, 'freezedts.config.json');
+      fs.writeFileSync(configPath, JSON.stringify({ freezed: { options: { format: true } } }));
 
       const config = loadConfig(configPath);
       expect(config.format).toBe(true);
@@ -74,15 +74,17 @@ describe('loadConfig', () => {
 
   it('reads all options together', () => {
     withTempDir((dir) => {
-      const configPath = path.join(dir, 'freezedts.config.yaml');
-      fs.writeFileSync(configPath, [
-        'freezed:',
-        '  options:',
-        '    format: true',
-        '    copyWith: false',
-        '    equal: false',
-        '    toString: false',
-      ].join('\n'));
+      const configPath = path.join(dir, 'freezedts.config.json');
+      fs.writeFileSync(configPath, JSON.stringify({
+        freezed: {
+          options: {
+            format: true,
+            copyWith: false,
+            equal: false,
+            toString: false,
+          },
+        },
+      }));
 
       const config = loadConfig(configPath);
       expect(config).toEqual({
@@ -94,10 +96,10 @@ describe('loadConfig', () => {
     });
   });
 
-  it('handles empty yaml file gracefully', () => {
+  it('handles empty json object gracefully', () => {
     withTempDir((dir) => {
-      const configPath = path.join(dir, 'freezedts.config.yaml');
-      fs.writeFileSync(configPath, '');
+      const configPath = path.join(dir, 'freezedts.config.json');
+      fs.writeFileSync(configPath, '{}');
 
       const config = loadConfig(configPath);
       expect(config).toEqual({
@@ -109,10 +111,10 @@ describe('loadConfig', () => {
     });
   });
 
-  it('handles yaml with freezed key but no options', () => {
+  it('handles json with freezed key but no options', () => {
     withTempDir((dir) => {
-      const configPath = path.join(dir, 'freezedts.config.yaml');
-      fs.writeFileSync(configPath, 'freezed:\n');
+      const configPath = path.join(dir, 'freezedts.config.json');
+      fs.writeFileSync(configPath, JSON.stringify({ freezed: {} }));
 
       const config = loadConfig(configPath);
       expect(config).toEqual({
@@ -124,12 +126,12 @@ describe('loadConfig', () => {
     });
   });
 
-  it('throws a clear error for invalid YAML', async () => {
+  it('throws a clear error for invalid JSON', async () => {
     await withTempDir((dir) => {
-      const configPath = path.join(dir, 'freezedts.config.yaml');
-      fs.writeFileSync(configPath, '{{{{invalid yaml content: [[[');
+      const configPath = path.join(dir, 'freezedts.config.json');
+      fs.writeFileSync(configPath, '{{{{invalid json content');
 
-      expect(() => loadConfig(configPath)).toThrow('invalid YAML');
+      expect(() => loadConfig(configPath)).toThrow('invalid JSON');
     });
   });
 });

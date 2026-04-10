@@ -83,7 +83,7 @@ export function parseArgs(argv: string[]): CliArgs {
 function main() {
   const args = parseArgs(process.argv);
   const resolvedDir = path.resolve(args.dir);
-  const configPath = args.config ?? path.join(resolvedDir, 'freezedts.config.yaml');
+  const configPath = args.config ?? path.join(resolvedDir, 'freezedts.config.json');
   const config = loadConfig(configPath);
 
   console.log(`freezedts: scanning ${resolvedDir}`);

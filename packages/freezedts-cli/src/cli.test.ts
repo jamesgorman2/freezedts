@@ -79,26 +79,26 @@ describe('parseArgs', () => {
   });
 
   it('parses --config flag with path', () => {
-    expect(parseArgs(['node', 'cli.js', '--config', 'custom.yaml'])).toEqual({
+    expect(parseArgs(['node', 'cli.js', '--config', 'custom.json'])).toEqual({
       watch: false,
       dir: '.',
-      config: 'custom.yaml',
+      config: 'custom.json',
     });
   });
 
   it('parses -c shorthand for config', () => {
-    expect(parseArgs(['node', 'cli.js', '-c', 'my.yaml'])).toEqual({
+    expect(parseArgs(['node', 'cli.js', '-c', 'my.json'])).toEqual({
       watch: false,
       dir: '.',
-      config: 'my.yaml',
+      config: 'my.json',
     });
   });
 
   it('parses --config with --watch and directory', () => {
-    expect(parseArgs(['node', 'cli.js', '--watch', '--config', 'cfg.yaml', 'src'])).toEqual({
+    expect(parseArgs(['node', 'cli.js', '--watch', '--config', 'cfg.json', 'src'])).toEqual({
       watch: true,
       dir: 'src',
-      config: 'cfg.yaml',
+      config: 'cfg.json',
     });
   });
 
