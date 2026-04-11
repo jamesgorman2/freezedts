@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll } from 'bun:test';
 import * as path from 'node:path';
+import * as fs from 'node:fs';
 import { generate } from '../../packages/freezedts-cli/src/generator/generator.js';
 
 const fixturesDir = path.resolve(import.meta.dirname, 'fixtures');
@@ -9,6 +10,7 @@ beforeAll(() => {
     path.join(fixturesDir, 'same-file.ts'),
     path.join(fixturesDir, 'imported.ts'),
     path.join(fixturesDir, 'type-alias.ts'),
+    path.join(fixturesDir, 'with-complex-fields.ts'),
   ]);
 });
 
@@ -87,5 +89,43 @@ describe('interface params', () => {
     const b = new Employee({ name: 'Alice', department: 'Eng', level: 3 });
     expect(a.equals(b)).toBe(true);
     expect(a.equals(new Employee({ name: 'Alice', department: 'Eng', level: 4 }))).toBe(false);
+  });
+});
+
+describe('interface params -- imported type fields', () => {
+  it('works with interface containing imported type field', async () => {
+    const { Marker } = await import('./fixtures/with-complex-fields.ts');
+    const m = new Marker({ label: 'a', position: { x: 1, y: 2 } });
+    expect(m.position.x).toBe(1);
+  });
+
+  it('imported type field is frozen', async () => {
+    const { Marker } = await import('./fixtures/with-complex-fields.ts');
+    const m = new Marker({ label: 'a', position: { x: 1, y: 2 } });
+    expect(Object.isFrozen(m.position)).toBe(true);
+  });
+
+  it('with() replaces imported type field', async () => {
+    const { Marker } = await import('./fixtures/with-complex-fields.ts');
+    const m = new Marker({ label: 'a', position: { x: 1, y: 2 } });
+    const m2 = m.with({ position: { x: 9, y: 9 } });
+    expect(m2.position).toEqual({ x: 9, y: 9 });
+    expect(m2).not.toBe(m);
+  });
+
+  it('equals() compares imported type fields deeply', async () => {
+    const { Marker } = await import('./fixtures/with-complex-fields.ts');
+    const a = new Marker({ label: 'a', position: { x: 1, y: 2 } });
+    const b = new Marker({ label: 'a', position: { x: 1, y: 2 } });
+    expect(a.equals(b)).toBe(true);
+    const c = new Marker({ label: 'a', position: { x: 9, y: 9 } });
+    expect(a.equals(c)).toBe(false);
+  });
+
+  it('generated file imports Coord', () => {
+    const content = fs.readFileSync(
+      path.join(fixturesDir, 'with-complex-fields.freezed.ts'), 'utf-8',
+    );
+    expect(content).toContain("import type { Coord }");
   });
 });
