@@ -9,6 +9,8 @@ beforeAll(() => {
     path.join(fixturesDir, 'defaults.ts'),
     path.join(fixturesDir, 'assertions.ts'),
     path.join(fixturesDir, 'mixed.ts'),
+    path.join(fixturesDir, 'with-import-defaults.ts'),
+    path.join(fixturesDir, 'with-import-assertions.ts'),
   ]);
 });
 
@@ -95,5 +97,55 @@ describe('field config — regression', () => {
     const s = new Simple({ value: 'hello' });
     expect(s.value).toBe('hello');
     expect(Object.isFrozen(s)).toBe(true);
+  });
+});
+
+describe('field config -- imported type defaults', () => {
+  it('applies imported-type default when omitted', async () => {
+    const { Waypoint } = await import('./fixtures/with-import-defaults.ts');
+    const w = new Waypoint({ name: 'a' });
+    expect(w.position).toEqual({ x: 0, y: 0 });
+  });
+
+  it('uses provided imported-type value over default', async () => {
+    const { Waypoint } = await import('./fixtures/with-import-defaults.ts');
+    const w = new Waypoint({ name: 'a', position: { x: 5, y: 5 } });
+    expect(w.position).toEqual({ x: 5, y: 5 });
+  });
+
+  it('default imported-type value is frozen', async () => {
+    const { Waypoint } = await import('./fixtures/with-import-defaults.ts');
+    const w = new Waypoint({ name: 'a' });
+    expect(Object.isFrozen(w.position)).toBe(true);
+  });
+
+  it('with({ position: undefined }) reapplies imported-type default', async () => {
+    const { Waypoint } = await import('./fixtures/with-import-defaults.ts');
+    const w = new Waypoint({ name: 'a', position: { x: 5, y: 5 } });
+    const w2 = w.with({ position: undefined });
+    expect(w2.position).toEqual({ x: 0, y: 0 });
+  });
+});
+
+describe('field config -- imported type assertions', () => {
+  it('allows construction with valid imported-type value', async () => {
+    const { Marker } = await import('./fixtures/with-import-assertions.ts');
+    const m = new Marker({ name: 'a', position: { x: 1, y: 1 } });
+    expect(m.position).toEqual({ x: 1, y: 1 });
+  });
+
+  it('throws on invalid imported-type value', async () => {
+    const { Marker } = await import('./fixtures/with-import-assertions.ts');
+    expect(() => new Marker({ name: 'a', position: { x: -1, y: 0 } })).toThrow(
+      'position must be non-negative',
+    );
+  });
+
+  it('with() that violates imported-type assertion throws', async () => {
+    const { Marker } = await import('./fixtures/with-import-assertions.ts');
+    const m = new Marker({ name: 'a', position: { x: 1, y: 1 } });
+    expect(() => m.with({ position: { x: -1, y: 0 } })).toThrow(
+      'position must be non-negative',
+    );
   });
 });
