@@ -36,3 +36,59 @@ describe('transient type imports', () => {
     expect(generated).not.toContain('BaseModel');
   });
 });
+
+describe('transient types -- runtime behavior', () => {
+  it('constructs with transient type values', async () => {
+    const { Board } = await import('./fixtures/board.ts');
+    const b = new Board({
+      feature: { id: '1', name: 'x' },
+      features: [{ id: '2', name: 'y' }],
+    });
+    expect(b.feature.id).toBe('1');
+    expect(b.features[0].name).toBe('y');
+  });
+
+  it('instance and feature values are frozen', async () => {
+    const { Board } = await import('./fixtures/board.ts');
+    const b = new Board({
+      feature: { id: '1', name: 'x' },
+      features: [{ id: '2', name: 'y' }],
+    });
+    expect(Object.isFrozen(b)).toBe(true);
+    expect(Object.isFrozen(b.feature)).toBe(true);
+    expect(Object.isFrozen(b.features)).toBe(true);
+  });
+
+  it('features array is frozen', async () => {
+    const { Board } = await import('./fixtures/board.ts');
+    const b = new Board({
+      feature: { id: '1', name: 'x' },
+      features: [{ id: '2', name: 'y' }],
+    });
+    expect(() => (b.features as any[]).push({ id: '3', name: 'z' })).toThrow();
+  });
+
+  it('equals works with transient types', async () => {
+    const { Board } = await import('./fixtures/board.ts');
+    const a = new Board({ feature: { id: '1', name: 'x' }, features: [] });
+    const b = new Board({ feature: { id: '1', name: 'x' }, features: [] });
+    expect(a.equals(b)).toBe(true);
+    const c = new Board({ feature: { id: '2', name: 'y' }, features: [] });
+    expect(a.equals(c)).toBe(false);
+  });
+
+  it('with() replaces feature field', async () => {
+    const { Board } = await import('./fixtures/board.ts');
+    const b = new Board({ feature: { id: '1', name: 'x' }, features: [] });
+    const b2 = b.with({ feature: { id: '3', name: 'z' } });
+    expect(b2.feature.id).toBe('3');
+    expect(Object.isFrozen(b2)).toBe(true);
+    expect(b.feature.id).toBe('1');
+  });
+
+  it('toString includes feature fields', async () => {
+    const { Board } = await import('./fixtures/board.ts');
+    const b = new Board({ feature: { id: '1', name: 'x' }, features: [] });
+    expect(b.toString()).toContain('Board(');
+  });
+});
