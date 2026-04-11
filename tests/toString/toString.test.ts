@@ -8,6 +8,7 @@ beforeAll(() => {
   generate([
     path.join(fixturesDir, 'person.ts'),
     path.join(fixturesDir, 'nested.ts'),
+    path.join(fixturesDir, 'with-import.ts'),
   ]);
 });
 
@@ -50,5 +51,21 @@ describe('toString() — nested @freezed types', () => {
     expect(addr.toString()).toBe('Address(street: Main St, city: LA)');
     const e = new Employee({ name: 'Bob', address: addr });
     expect(e.toString()).toContain('Address(street: Main St, city: LA)');
+  });
+});
+
+describe('toString() — imported non-freezed types', () => {
+  it('toString includes imported non-freezed type field', async () => {
+    const { Waypoint } = await import('./fixtures/with-import.ts');
+    const w = new Waypoint({ name: 'a', position: { x: 1, y: 2 } });
+    expect(w.toString()).toContain('position:');
+  });
+
+  it('toString representation of plain object field', async () => {
+    const { Waypoint } = await import('./fixtures/with-import.ts');
+    const w = new Waypoint({ name: 'a', position: { x: 1, y: 2 } });
+    const str = w.toString();
+    expect(str).toContain('Waypoint(');
+    expect(str).toContain('name: a');
   });
 });
