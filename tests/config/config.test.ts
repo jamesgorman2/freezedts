@@ -12,6 +12,8 @@ beforeAll(() => {
     path.join(fixturesDir, 'no-equal.ts'),
     path.join(fixturesDir, 'all-disabled.ts'),
     path.join(fixturesDir, 'no-to-string.ts'),
+    path.join(fixturesDir, 'no-equal-imported.ts'),
+    path.join(fixturesDir, 'no-copy-with-imported.ts'),
   ]);
 });
 
@@ -231,5 +233,47 @@ describe('config file — project-wide defaults', () => {
       // Should be valid — no broken syntax from formatting
       expect(content).toContain('Object.freeze(this)');
     });
+  });
+});
+
+describe('config -- imported type interaction', () => {
+  it('equal:false still freezes imported-type fields', async () => {
+    const { Pin } = await import('./fixtures/no-equal-imported.ts');
+    const pin = new Pin({ label: 'a', position: { x: 1, y: 2 } });
+    expect(Object.isFrozen(pin.position)).toBe(true);
+  });
+
+  it('equal:false -- no equals method with imported type', async () => {
+    const { Pin } = await import('./fixtures/no-equal-imported.ts');
+    const pin = new Pin({ label: 'a', position: { x: 1, y: 2 } });
+    expect((pin as any).equals).toBeUndefined();
+  });
+
+  it('copyWith:false still freezes imported-type fields', async () => {
+    const { Marker } = await import('./fixtures/no-copy-with-imported.ts');
+    const marker = new Marker({ label: 'a', position: { x: 1, y: 2 } });
+    expect(Object.isFrozen(marker.position)).toBe(true);
+  });
+
+  it('copyWith:false -- no with method with imported type', async () => {
+    const { Marker } = await import('./fixtures/no-copy-with-imported.ts');
+    const marker = new Marker({ label: 'a', position: { x: 1, y: 2 } });
+    expect((marker as any).with).toBeUndefined();
+  });
+
+  it('generated file for imported type with equal:false omits equals but retains import', () => {
+    const content = fs.readFileSync(
+      path.join(fixturesDir, 'no-equal-imported.freezed.ts'), 'utf-8',
+    );
+    expect(content).toContain("import type { Coord }");
+    expect(content).not.toContain('equals(other');
+  });
+
+  it('generated file for imported type with copyWith:false omits with but retains import', () => {
+    const content = fs.readFileSync(
+      path.join(fixturesDir, 'no-copy-with-imported.freezed.ts'), 'utf-8',
+    );
+    expect(content).toContain("import type { Coord }");
+    expect(content).not.toContain('get with()');
   });
 });
