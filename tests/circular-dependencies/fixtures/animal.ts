@@ -4,7 +4,7 @@ import { $Animal } from './animal.freezed.ts';
 
 @freezed()
 class Animal extends $Animal {
-  constructor(params: { owner: Person }) {
+  constructor(params: { species: string; owner: Person | null }) {
     super(params);
   }
 }
