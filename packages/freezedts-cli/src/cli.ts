@@ -86,6 +86,12 @@ export function parseArgs(argv: string[]): CliArgs {
 
 function main() {
   const args = parseArgs(process.argv);
+
+  if (args.force && args.watch) {
+    console.error('freezedts: --force and --watch cannot be used together');
+    process.exit(1);
+  }
+
   const resolvedDir = path.resolve(args.dir);
   const configPath = args.config ?? path.join(resolvedDir, 'freezedts.config.json');
   const config = loadConfig(configPath);
@@ -94,7 +100,9 @@ function main() {
   const allFiles = resolveSourceFiles(resolvedDir);
   console.log(`freezedts: found ${allFiles.length} source file(s)`);
 
-  const { changed, skipped } = filterChangedFiles(allFiles);
+  const { changed, skipped } = args.force
+    ? { changed: allFiles, skipped: 0 }
+    : filterChangedFiles(allFiles);
   const result = generate(changed, config);
 
   if (skipped > 0) {
