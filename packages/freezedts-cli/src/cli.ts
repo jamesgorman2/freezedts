@@ -36,6 +36,7 @@ export function resolveSourceFiles(dir: string): string[] {
 
 export interface CliArgs {
   watch: boolean;
+  force: boolean;
   dir: string;
   config?: string;
 }
@@ -63,6 +64,7 @@ export function filterChangedFiles(files: string[]): { changed: string[]; skippe
 export function parseArgs(argv: string[]): CliArgs {
   const args = argv.slice(2);
   let watch = false;
+  let force = false;
   let dir = '.';
   let config: string | undefined;
 
@@ -70,6 +72,8 @@ export function parseArgs(argv: string[]): CliArgs {
     const arg = args[i];
     if (arg === '--watch' || arg === '-w') {
       watch = true;
+    } else if (arg === '--force') {
+      force = true;
     } else if ((arg === '--config' || arg === '-c') && i + 1 < args.length) {
       config = args[++i];
     } else if (!arg.startsWith('-')) {
@@ -77,7 +81,7 @@ export function parseArgs(argv: string[]): CliArgs {
     }
   }
 
-  return { watch, dir, config };
+  return { watch, force, dir, config };
 }
 
 function main() {
