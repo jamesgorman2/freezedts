@@ -41,9 +41,9 @@ describe('emitFreezedFile', () => {
     expect(output).toContain('  lastName: string;');
     expect(output).toContain('  age: number;');
     expect(output).toContain('export abstract class $Person {');
-    expect(output).toContain('  readonly firstName!: string;');
-    expect(output).toContain('  readonly lastName!: string;');
-    expect(output).toContain('  readonly age!: number;');
+    expect(output).toContain('  readonly firstName: string;');
+    expect(output).toContain('  readonly lastName: string;');
+    expect(output).toContain('  readonly age: number;');
     expect(output).toContain('  constructor(params: PersonParams) {');
     expect(output).toContain('    this.firstName = params.firstName;');
     expect(output).toContain('    Object.freeze(this);');
@@ -133,7 +133,7 @@ describe('emitFreezedFile', () => {
     // Params type uses Inner (the concrete class name)
     expect(output).toContain('  inner: Inner;');
     // Readonly field uses Inner
-    expect(output).toContain('  readonly inner!: Inner;');
+    expect(output).toContain('  readonly inner: Inner;');
   });
 
   it('marks optional params with ? in the params type', () => {
@@ -153,7 +153,64 @@ describe('emitFreezedFile', () => {
     const output = emitFreezedFile(classes);
     expect(output).toContain('  host: string;');
     expect(output).toContain('  port?: number;');
-    expect(output).toContain('  readonly port!: number;');
+    expect(output).toContain('  readonly port?: number;');
+  });
+
+  it('preserves ? on readonly field for optional property without default', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Address',
+        generatedClassName: '$Address',
+        hasDefaults: false, hasAsserts: false,
+        equalityMode: 'deep',
+        properties: [
+          { name: 'street', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'zip', type: 'string', optional: true, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+        ],
+      },
+    ];
+
+    const output = emitFreezedFile(classes);
+    expect(output).toContain('  readonly street: string;');
+    expect(output).toContain('  readonly zip?: string;');
+  });
+
+  it('preserves | undefined on readonly field for explicit union type', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Record',
+        generatedClassName: '$Record',
+        hasDefaults: false, hasAsserts: false,
+        equalityMode: 'deep',
+        properties: [
+          { name: 'name', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'value', type: 'number | undefined', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+        ],
+      },
+    ];
+
+    const output = emitFreezedFile(classes);
+    expect(output).toContain('  readonly name: string;');
+    expect(output).toContain('  readonly value: number | undefined;');
+  });
+
+  it('drops ? from readonly field for optional property with default', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Config',
+        generatedClassName: '$Config',
+        hasDefaults: true, hasAsserts: false,
+        equalityMode: 'deep',
+        properties: [
+          { name: 'host', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'port', type: 'number', optional: true, hasDefault: true, hasAssert: false, hasMessage: false, isFreezed: false },
+        ],
+      },
+    ];
+
+    const output = emitFreezedFile(classes);
+    expect(output).toContain('  readonly port: number;');
+    expect(output).not.toContain('  readonly port?: number;');
   });
 
   it('makes hasDefault properties optional in params type', () => {
@@ -288,7 +345,7 @@ describe('emitFreezedFile', () => {
     ];
 
     const output = emitFreezedFile(classes);
-    expect(output).toContain('  readonly count!: number;');
+    expect(output).toContain('  readonly count: number;');
     expect(output).not.toContain('readonly count!: number | undefined');
     expect(output).toContain('  count?: number | undefined;');
   });

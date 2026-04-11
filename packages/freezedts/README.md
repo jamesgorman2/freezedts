@@ -85,6 +85,13 @@ npx freezedts -w src
 # Use a custom config file
 npx freezedts --config path/to/freezedts.config.json
 npx freezedts -c custom.json -w src
+
+# Force generating all freezed files
+npx freezedts --force
+
+# Show help
+npx freezedts --help
+npx freezedts -h
 ```
 
 The generator scans for `.ts` files containing `@freezed()` classes and produces `.freezed.ts` files alongside them. 

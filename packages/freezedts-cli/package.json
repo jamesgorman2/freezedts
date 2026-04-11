@@ -1,6 +1,6 @@
 {
   "name": "freezedts-cli",
-  "version": "0.15.0",
+  "version": "0.15.1",
   "type": "module",
   "engines": { "node": ">=22" },
   "description": "Code generator CLI for freezedts",
@@ -21,7 +21,7 @@
   "keywords": ["immutable", "codegen", "decorator", "typescript", "cli"],
   "license": "MIT",
   "dependencies": {
-    "freezedts": "^0.15.0",
+    "freezedts": "^0.15.1",
     "ts-morph": "^27.0.2"
   }
 }

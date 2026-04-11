@@ -37,7 +37,7 @@ describe('generate', () => {
 
       const content = fs.readFileSync(generatedPath, 'utf-8');
       expect(content).toContain('export abstract class $Person');
-      expect(content).toContain('readonly firstName!: string');
+      expect(content).toContain('readonly firstName: string');
       expect(content).toContain('Object.freeze(this)');
     });
   });
@@ -291,7 +291,7 @@ describe('generate', () => {
       expect(formattedContent).not.toEqual(unformattedContent);
       // But should contain the same logical content
       expect(formattedContent).toContain('export abstract class $Person');
-      expect(formattedContent).toContain('readonly name!: string');
+      expect(formattedContent).toContain('readonly name: string');
     });
   });
 
@@ -448,7 +448,7 @@ describe('generate', () => {
 
       // inner property should use Inner type (cross-file resolution)
       expect(outerContent).toContain('inner: Inner;');
-      expect(outerContent).toContain('readonly inner!: Inner;');
+      expect(outerContent).toContain('readonly inner: Inner;');
 
       // With type should include nested inner member
       expect(outerContent).toContain('inner: InnerWith<Self>;');

@@ -75,7 +75,8 @@ function emitClassBody(cls: ParsedFreezedClass): string {
     .map((p) => {
       let type = p.type;
       if (p.hasDefault) type = type.replace(/ \| undefined$/, '');
-      return `  readonly ${p.name}!: ${type};`;
+      const opt = p.optional && !p.hasDefault ? '?' : '';
+      return `  readonly ${p.name}${opt}: ${type};`;
     })
     .join('\n');
 
