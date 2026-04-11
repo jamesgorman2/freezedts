@@ -9,6 +9,7 @@ beforeAll(() => {
     path.join(fixturesDir, 'arrays.ts'),
     path.join(fixturesDir, 'maps-sets.ts'),
     path.join(fixturesDir, 'nested-collections.ts'),
+    path.join(fixturesDir, 'imported-elements.ts'),
   ]);
 });
 
@@ -139,5 +140,83 @@ describe('collection safety — with() copies', () => {
     const t2 = t1.with({ members: ['Bob', 'Charlie'] });
     expect(t2.members).toEqual(['Bob', 'Charlie']);
     expect(() => (t2.members as string[]).push('Dave')).toThrow();
+  });
+});
+
+describe('collections -- imported type elements', () => {
+  it('constructs with array of imported types', async () => {
+    const { Path } = await import('./fixtures/imported-elements.ts');
+    const p = new Path({
+      name: 'route',
+      points: [{ x: 0, y: 0 }, { x: 1, y: 1 }],
+      lookup: new Map([['origin', { x: 0, y: 0 }]]),
+    });
+    expect(p.name).toBe('route');
+    expect(p.points).toHaveLength(2);
+  });
+
+  it('array of imported types is frozen', async () => {
+    const { Path } = await import('./fixtures/imported-elements.ts');
+    const p = new Path({
+      name: 'route',
+      points: [{ x: 0, y: 0 }],
+      lookup: new Map(),
+    });
+    expect(Object.isFrozen(p.points)).toBe(true);
+    expect(() => (p.points as any[]).push({ x: 2, y: 2 })).toThrow();
+  });
+
+  it('individual imported-type elements in array are frozen', async () => {
+    const { Path } = await import('./fixtures/imported-elements.ts');
+    const p = new Path({
+      name: 'route',
+      points: [{ x: 0, y: 0 }],
+      lookup: new Map(),
+    });
+    expect(Object.isFrozen(p.points[0])).toBe(true);
+    expect(() => { (p.points[0] as any).x = 99; }).toThrow();
+  });
+
+  it('Map with imported-type values is frozen', async () => {
+    const { Path } = await import('./fixtures/imported-elements.ts');
+    const p = new Path({
+      name: 'route',
+      points: [],
+      lookup: new Map([['origin', { x: 0, y: 0 }]]),
+    });
+    expect(Object.isFrozen(p.lookup)).toBe(true);
+    expect(() => p.lookup.set('new', { x: 1, y: 1 })).toThrow();
+  });
+
+  it('Map values (imported type) are frozen', async () => {
+    const { Path } = await import('./fixtures/imported-elements.ts');
+    const p = new Path({
+      name: 'route',
+      points: [],
+      lookup: new Map([['origin', { x: 0, y: 0 }]]),
+    });
+    expect(Object.isFrozen(p.lookup.get('origin'))).toBe(true);
+  });
+
+  it('equals works with imported-type collection elements', async () => {
+    const { Path } = await import('./fixtures/imported-elements.ts');
+    const a = new Path({ name: 'r', points: [{ x: 1, y: 2 }], lookup: new Map() });
+    const b = new Path({ name: 'r', points: [{ x: 1, y: 2 }], lookup: new Map() });
+    expect(a.equals(b)).toBe(true);
+  });
+
+  it('equals detects differences in imported-type elements', async () => {
+    const { Path } = await import('./fixtures/imported-elements.ts');
+    const a = new Path({ name: 'r', points: [{ x: 1, y: 2 }], lookup: new Map() });
+    const b = new Path({ name: 'r', points: [{ x: 1, y: 9 }], lookup: new Map() });
+    expect(a.equals(b)).toBe(false);
+  });
+
+  it('with() replaces array of imported types', async () => {
+    const { Path } = await import('./fixtures/imported-elements.ts');
+    const p = new Path({ name: 'r', points: [{ x: 1, y: 2 }], lookup: new Map() });
+    const p2 = p.with({ points: [{ x: 5, y: 5 }] });
+    expect(p2.points).toEqual([{ x: 5, y: 5 }]);
+    expect(Object.isFrozen(p2.points)).toBe(true);
   });
 });
