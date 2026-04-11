@@ -58,28 +58,30 @@ describe('resolveSourceFiles', () => {
 
 describe('parseArgs', () => {
   it('defaults to no watch and current directory', () => {
-    expect(parseArgs(['node', 'cli.js'])).toEqual({ watch: false, force: false, dir: '.', config: undefined });
+    expect(parseArgs(['node', 'cli.js'])).toEqual({ help: false, version: false, watch: false, force: false, dir: '.', config: undefined });
   });
 
   it('parses --watch flag', () => {
-    expect(parseArgs(['node', 'cli.js', '--watch'])).toEqual({ watch: true, force: false, dir: '.', config: undefined });
+    expect(parseArgs(['node', 'cli.js', '--watch'])).toEqual({ help: false, version: false, watch: true, force: false, dir: '.', config: undefined });
   });
 
   it('parses -w shorthand', () => {
-    expect(parseArgs(['node', 'cli.js', '-w'])).toEqual({ watch: true, force: false, dir: '.', config: undefined });
+    expect(parseArgs(['node', 'cli.js', '-w'])).toEqual({ help: false, version: false, watch: true, force: false, dir: '.', config: undefined });
   });
 
   it('parses positional directory argument', () => {
-    expect(parseArgs(['node', 'cli.js', 'src'])).toEqual({ watch: false, force: false, dir: 'src', config: undefined });
+    expect(parseArgs(['node', 'cli.js', 'src'])).toEqual({ help: false, version: false, watch: false, force: false, dir: 'src', config: undefined });
   });
 
   it('parses both --watch and directory in any order', () => {
-    expect(parseArgs(['node', 'cli.js', '--watch', 'src'])).toEqual({ watch: true, force: false, dir: 'src', config: undefined });
-    expect(parseArgs(['node', 'cli.js', 'src', '-w'])).toEqual({ watch: true, force: false, dir: 'src', config: undefined });
+    expect(parseArgs(['node', 'cli.js', '--watch', 'src'])).toEqual({ help: false, version: false, watch: true, force: false, dir: 'src', config: undefined });
+    expect(parseArgs(['node', 'cli.js', 'src', '-w'])).toEqual({ help: false, version: false, watch: true, force: false, dir: 'src', config: undefined });
   });
 
   it('parses --config flag with path', () => {
     expect(parseArgs(['node', 'cli.js', '--config', 'custom.json'])).toEqual({
+      help: false,
+      version: false,
       watch: false,
       force: false,
       dir: '.',
@@ -89,6 +91,8 @@ describe('parseArgs', () => {
 
   it('parses -c shorthand for config', () => {
     expect(parseArgs(['node', 'cli.js', '-c', 'my.json'])).toEqual({
+      help: false,
+      version: false,
       watch: false,
       force: false,
       dir: '.',
@@ -98,6 +102,8 @@ describe('parseArgs', () => {
 
   it('parses --config with --watch and directory', () => {
     expect(parseArgs(['node', 'cli.js', '--watch', '--config', 'cfg.json', 'src'])).toEqual({
+      help: false,
+      version: false,
       watch: true,
       force: false,
       dir: 'src',
@@ -107,6 +113,8 @@ describe('parseArgs', () => {
 
   it('config is undefined when not specified', () => {
     expect(parseArgs(['node', 'cli.js'])).toEqual({
+      help: false,
+      version: false,
       watch: false,
       force: false,
       dir: '.',
@@ -116,6 +124,8 @@ describe('parseArgs', () => {
 
   it('parses --force flag', () => {
     expect(parseArgs(['node', 'cli.js', '--force'])).toEqual({
+      help: false,
+      version: false,
       watch: false,
       force: true,
       dir: '.',
@@ -125,6 +135,8 @@ describe('parseArgs', () => {
 
   it('force defaults to false', () => {
     expect(parseArgs(['node', 'cli.js'])).toEqual({
+      help: false,
+      version: false,
       watch: false,
       force: false,
       dir: '.',
@@ -134,10 +146,56 @@ describe('parseArgs', () => {
 
   it('parses --force with directory and config', () => {
     expect(parseArgs(['node', 'cli.js', '--force', '--config', 'cfg.json', 'src'])).toEqual({
+      help: false,
+      version: false,
       watch: false,
       force: true,
       dir: 'src',
       config: 'cfg.json',
+    });
+  });
+
+  it('parses --help flag', () => {
+    expect(parseArgs(['node', 'cli.js', '--help'])).toEqual({
+      help: true,
+      version: false,
+      watch: false,
+      force: false,
+      dir: '.',
+      config: undefined,
+    });
+  });
+
+  it('parses -h shorthand', () => {
+    expect(parseArgs(['node', 'cli.js', '-h'])).toEqual({
+      help: true,
+      version: false,
+      watch: false,
+      force: false,
+      dir: '.',
+      config: undefined,
+    });
+  });
+
+  it('parses --version flag', () => {
+    expect(parseArgs(['node', 'cli.js', '--version'])).toEqual({
+      help: false,
+      version: true,
+      watch: false,
+      force: false,
+      dir: '.',
+      config: undefined,
+    });
+  });
+
+  it('parses -v shorthand', () => {
+    expect(parseArgs(['node', 'cli.js', '-v'])).toEqual({
+      help: false,
+      version: true,
+      watch: false,
+      force: false,
+      dir: '.',
+      config: undefined,
     });
   });
 });

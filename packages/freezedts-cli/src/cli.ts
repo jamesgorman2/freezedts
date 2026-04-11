@@ -35,6 +35,8 @@ export function resolveSourceFiles(dir: string): string[] {
 }
 
 export interface CliArgs {
+  help: boolean;
+  version: boolean;
   watch: boolean;
   force: boolean;
   dir: string;
@@ -63,6 +65,8 @@ export function filterChangedFiles(files: string[]): { changed: string[]; skippe
 
 export function parseArgs(argv: string[]): CliArgs {
   const args = argv.slice(2);
+  let help = false;
+  let version = false;
   let watch = false;
   let force = false;
   let dir = '.';
@@ -70,7 +74,11 @@ export function parseArgs(argv: string[]): CliArgs {
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
-    if (arg === '--watch' || arg === '-w') {
+    if (arg === '--help' || arg === '-h') {
+      help = true;
+    } else if (arg === '--version' || arg === '-v') {
+      version = true;
+    } else if (arg === '--watch' || arg === '-w') {
       watch = true;
     } else if (arg === '--force') {
       force = true;
@@ -81,11 +89,37 @@ export function parseArgs(argv: string[]): CliArgs {
     }
   }
 
-  return { watch, force, dir, config };
+  return { help, version, watch, force, dir, config };
+}
+
+function getVersion(): string {
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf-8'));
+  return pkg.version;
 }
 
 function main() {
   const args = parseArgs(process.argv);
+
+  if (args.help) {
+    const version = getVersion();
+    console.log(`freezedts v${version} — Code generator for freezedts
+
+Usage: freezedts [options] [dir]
+
+Options:
+  -h, --help          Show this help message
+  -v, --version       Show version number
+  -w, --watch         Watch for file changes
+      --force         Force regeneration (incompatible with --watch)
+  -c, --config <path> Path to config file`);
+    process.exit(0);
+  }
+
+  if (args.version) {
+    console.log(`freezedts v${getVersion()}`);
+    process.exit(0);
+  }
 
   if (args.force && args.watch) {
     console.error('freezedts: --force and --watch cannot be used together');
