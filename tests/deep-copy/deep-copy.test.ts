@@ -5,7 +5,11 @@ import { generate } from '../../packages/freezedts-cli/src/generator/generator.j
 const fixturesDir = path.resolve(import.meta.dirname, 'fixtures');
 
 beforeAll(() => {
-  generate([path.join(fixturesDir, 'company.ts')]);
+  generate([
+    path.join(fixturesDir, 'company.ts'),
+    path.join(fixturesDir, 'locatable.ts'),
+    path.join(fixturesDir, 'route.ts'),
+  ]);
 });
 
 describe('deep with() — shallow still works', () => {
@@ -141,5 +145,79 @@ describe('deep with() — proxy edge cases', () => {
     const d = new Director({ name: 'Bob', assistant: a });
     const c = new Company({ name: 'Acme', director: d });
     expect(typeof c.with).toBe('function');
+  });
+});
+
+describe('deep copy -- cross-file imported types', () => {
+  it('constructs with cross-file nested freezed + imported type', async () => {
+    const { Locatable } = await import('./fixtures/locatable.ts');
+    const { Route } = await import('./fixtures/route.ts');
+    const route = new Route({
+      name: 'r',
+      origin: new Locatable({ label: 'a', position: { x: 1, y: 2 } }),
+    });
+    expect(route.name).toBe('r');
+    expect(route.origin.label).toBe('a');
+    expect(route.origin.position).toEqual({ x: 1, y: 2 });
+  });
+
+  it('with() replaces top-level field', async () => {
+    const { Locatable } = await import('./fixtures/locatable.ts');
+    const { Route } = await import('./fixtures/route.ts');
+    const route = new Route({
+      name: 'r',
+      origin: new Locatable({ label: 'a', position: { x: 1, y: 2 } }),
+    });
+    const r2 = route.with({ name: 'new' });
+    expect(r2.name).toBe('new');
+    expect(r2.origin.label).toBe('a');
+  });
+
+  it('deep with on cross-file freezed property', async () => {
+    const { Locatable } = await import('./fixtures/locatable.ts');
+    const { Route } = await import('./fixtures/route.ts');
+    const route = new Route({
+      name: 'r',
+      origin: new Locatable({ label: 'a', position: { x: 1, y: 2 } }),
+    });
+    const r2 = route.with.origin({ label: 'b' });
+    expect(r2.origin.label).toBe('b');
+    expect(r2.origin.position).toEqual({ x: 1, y: 2 });
+    expect(r2.name).toBe('r');
+  });
+
+  it('deep with on cross-file freezed property replaces imported-type field', async () => {
+    const { Locatable } = await import('./fixtures/locatable.ts');
+    const { Route } = await import('./fixtures/route.ts');
+    const route = new Route({
+      name: 'r',
+      origin: new Locatable({ label: 'a', position: { x: 1, y: 2 } }),
+    });
+    const r2 = route.with.origin({ position: { x: 9, y: 9 } });
+    expect(r2.origin.position).toEqual({ x: 9, y: 9 });
+  });
+
+  it('original not modified after deep with', async () => {
+    const { Locatable } = await import('./fixtures/locatable.ts');
+    const { Route } = await import('./fixtures/route.ts');
+    const route = new Route({
+      name: 'r',
+      origin: new Locatable({ label: 'a', position: { x: 1, y: 2 } }),
+    });
+    route.with.origin({ label: 'changed' });
+    expect(route.origin.label).toBe('a');
+  });
+
+  it('result is frozen including imported type field', async () => {
+    const { Locatable } = await import('./fixtures/locatable.ts');
+    const { Route } = await import('./fixtures/route.ts');
+    const route = new Route({
+      name: 'r',
+      origin: new Locatable({ label: 'a', position: { x: 1, y: 2 } }),
+    });
+    const r2 = route.with.origin({ label: 'b' });
+    expect(Object.isFrozen(r2)).toBe(true);
+    expect(Object.isFrozen(r2.origin)).toBe(true);
+    expect(Object.isFrozen(r2.origin.position)).toBe(true);
   });
 });
