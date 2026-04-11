@@ -109,6 +109,33 @@ describe('parseArgs', () => {
       config: undefined,
     });
   });
+
+  it('parses --force flag', () => {
+    expect(parseArgs(['node', 'cli.js', '--force'])).toEqual({
+      watch: false,
+      force: true,
+      dir: '.',
+      config: undefined,
+    });
+  });
+
+  it('force defaults to false', () => {
+    expect(parseArgs(['node', 'cli.js'])).toEqual({
+      watch: false,
+      force: false,
+      dir: '.',
+      config: undefined,
+    });
+  });
+
+  it('parses --force with directory and config', () => {
+    expect(parseArgs(['node', 'cli.js', '--force', '--config', 'cfg.json', 'src'])).toEqual({
+      watch: false,
+      force: true,
+      dir: 'src',
+      config: 'cfg.json',
+    });
+  });
 });
 
 describe('filterChangedFiles', () => {
