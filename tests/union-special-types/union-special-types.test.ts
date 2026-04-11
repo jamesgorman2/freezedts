@@ -83,4 +83,30 @@ describe('union with undefined and any', () => {
     const b = new Loose({ maybe: 'x', anything: 'b', unionUndef: undefined });
     expect(a.equals(b)).toBe(false);
   });
+
+  it('equals detects difference in Alpha union values', async () => {
+    const { Loose } = await import('./fixtures/loose.ts');
+    const a = new Loose({
+      maybe: 'x', anything: 42,
+      unionUndef: { kind: 'alpha', value: 'x' },
+    });
+    const b = new Loose({
+      maybe: 'x', anything: 42,
+      unionUndef: { kind: 'alpha', value: 'y' },
+    });
+    expect(a.equals(b)).toBe(false);
+  });
+
+  it('equals returns true for identical Alpha values', async () => {
+    const { Loose } = await import('./fixtures/loose.ts');
+    const a = new Loose({
+      maybe: 'x', anything: 42,
+      unionUndef: { kind: 'alpha', value: 'same' },
+    });
+    const b = new Loose({
+      maybe: 'x', anything: 42,
+      unionUndef: { kind: 'alpha', value: 'same' },
+    });
+    expect(a.equals(b)).toBe(true);
+  });
 });

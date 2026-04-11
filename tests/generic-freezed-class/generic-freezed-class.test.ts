@@ -102,6 +102,27 @@ describe('@freezed class with simple generic <T>', () => {
     );
     expect(typeImports).toEqual([]);
   });
+
+  it('constructs with an Identifiable-typed value', async () => {
+    const { SimpleGeneric } = await import('./fixtures/simple-generic.ts');
+    const s = new SimpleGeneric({ value: { id: 'abc' }, label: 'test' });
+    expect(s.value.id).toBe('abc');
+  });
+
+  it('Identifiable value is frozen', async () => {
+    const { SimpleGeneric } = await import('./fixtures/simple-generic.ts');
+    const s = new SimpleGeneric({ value: { id: 'abc' }, label: 'test' });
+    expect(Object.isFrozen(s.value)).toBe(true);
+  });
+
+  it('equals works with Identifiable values', async () => {
+    const { SimpleGeneric } = await import('./fixtures/simple-generic.ts');
+    const a = new SimpleGeneric({ value: { id: 'abc' }, label: 'test' });
+    const b = new SimpleGeneric({ value: { id: 'abc' }, label: 'test' });
+    expect(a.equals(b)).toBe(true);
+    const c = new SimpleGeneric({ value: { id: 'xyz' }, label: 'test' });
+    expect(a.equals(c)).toBe(false);
+  });
 });
 
 describe('@freezed class with constrained generic <T extends Identifiable>', () => {

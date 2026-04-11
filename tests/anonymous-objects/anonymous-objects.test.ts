@@ -131,4 +131,42 @@ describe('anonymous object types', () => {
     expect(updated.deep).toEqual(wo.deep);
     expect(updated).not.toBe(wo);
   });
+
+  it('equals detects difference in imported Coord inside anonymous object', async () => {
+    const { WithObjects } = await import('./fixtures/with-objects.ts');
+    const base = {
+      shallow: { x: 1, y: 2 },
+      deep: { outer: { inner: 'hello', count: 3 } },
+      withExternal: { tags: [{ key: 'a', value: 'b' }], active: true },
+    };
+    const a = new WithObjects({ ...base, withImported: { position: { x: 10, y: 20 }, label: 'a' } });
+    const b = new WithObjects({ ...base, withImported: { position: { x: 10, y: 99 }, label: 'a' } });
+    expect(a.equals(b)).toBe(false);
+  });
+
+  it('with() replaces anonymous object containing imported type', async () => {
+    const { WithObjects } = await import('./fixtures/with-objects.ts');
+    const wo = new WithObjects({
+      shallow: { x: 1, y: 2 },
+      deep: { outer: { inner: 'hello', count: 3 } },
+      withImported: { position: { x: 10, y: 20 }, label: 'origin' },
+      withExternal: { tags: [{ key: 'a', value: 'b' }], active: true },
+    });
+    const updated = wo.with({ withImported: { position: { x: 5, y: 5 }, label: 'new' } });
+    expect(updated.withImported.position).toEqual({ x: 5, y: 5 });
+    expect(updated.withImported.label).toBe('new');
+  });
+
+  it('with() replaces anonymous object containing imported array type', async () => {
+    const { WithObjects } = await import('./fixtures/with-objects.ts');
+    const wo = new WithObjects({
+      shallow: { x: 1, y: 2 },
+      deep: { outer: { inner: 'hello', count: 3 } },
+      withImported: { position: { x: 10, y: 20 }, label: 'origin' },
+      withExternal: { tags: [{ key: 'a', value: 'b' }], active: true },
+    });
+    const updated = wo.with({ withExternal: { tags: [{ key: 'new', value: 'tag' }], active: false } });
+    expect(updated.withExternal.tags).toEqual([{ key: 'new', value: 'tag' }]);
+    expect(updated.withExternal.active).toBe(false);
+  });
 });

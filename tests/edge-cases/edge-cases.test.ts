@@ -100,6 +100,18 @@ describe('nullable primitive types (string | null, number | null)', () => {
     expect(np2.name).toBeNull();
     expect(np2.count).toBe(1);
   });
+
+  it('with() replaces Status | null field', async () => {
+    const { NullablePrimitives } = await import('./fixtures/nullable-primitives.ts');
+    const np = new NullablePrimitives({
+      name: 'x', count: 1, flag: true,
+      status: { code: 200, message: 'ok' },
+    });
+    const np2 = np.with({ status: null });
+    expect(np2.status).toBeNull();
+    const np3 = np.with({ status: { code: 500, message: 'error' } });
+    expect(np3.status).toEqual({ code: 500, message: 'error' });
+  });
 });
 
 // --- Multiple nullability modifiers ---
