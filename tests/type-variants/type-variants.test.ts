@@ -88,3 +88,180 @@ describe('arrays, unions, and transitive types in imports', () => {
     expect(generated).not.toMatch(/import[^;]*StrokeWith[^;]*from '\.\/canvas\.freezed\.js'/);
   });
 });
+
+describe('type variants -- runtime behavior', () => {
+  it('constructs Stroke with plain class and const-enum', async () => {
+    const { Stroke } = await import('./fixtures/canvas.ts');
+    const { Pigment } = await import('./fixtures/pigment.ts');
+    const s = new Stroke({
+      width: 2,
+      pigments: [new Pigment({ name: 'red', opacity: 0.8 })],
+      shade: 'DARK',
+    });
+    expect(s.width).toBe(2);
+    expect(s.pigments[0].name).toBe('red');
+    expect(s.shade).toBe('DARK');
+  });
+
+  it('constructs Canvas with all type variants', async () => {
+    const { Stroke, Canvas } = await import('./fixtures/canvas.ts');
+    const { Pigment } = await import('./fixtures/pigment.ts');
+    const stroke = new Stroke({
+      width: 1,
+      pigments: [new Pigment({ name: 'blue', opacity: 1.0 })],
+      shade: 'LIGHT',
+    });
+    const canvas = new Canvas({
+      title: 'art',
+      finish: 'MATTE',
+      strokes: [stroke],
+      layers: [new Pigment({ name: 'white', opacity: 0.5 })],
+      highlight: null,
+    });
+    expect(canvas.title).toBe('art');
+    expect(canvas.finish).toBe('MATTE');
+    expect(canvas.highlight).toBeNull();
+  });
+
+  it('constructs Canvas with non-null highlight', async () => {
+    const { Stroke, Canvas } = await import('./fixtures/canvas.ts');
+    const { Pigment } = await import('./fixtures/pigment.ts');
+    const stroke = new Stroke({
+      width: 3,
+      pigments: [new Pigment({ name: 'gold', opacity: 1.0 })],
+      shade: 'MEDIUM',
+    });
+    const canvas = new Canvas({
+      title: 'highlight test',
+      finish: 'GLOSSY',
+      strokes: [],
+      layers: [],
+      highlight: stroke,
+    });
+    expect(canvas.highlight).not.toBeNull();
+    expect(canvas.highlight!.width).toBe(3);
+  });
+
+  it('Pigment instances inside arrays are frozen', async () => {
+    const { Stroke } = await import('./fixtures/canvas.ts');
+    const { Pigment } = await import('./fixtures/pigment.ts');
+    const s = new Stroke({
+      width: 1,
+      pigments: [new Pigment({ name: 'red', opacity: 0.5 })],
+      shade: 'DARK',
+    });
+    expect(Object.isFrozen(s.pigments[0])).toBe(true);
+  });
+
+  it('Stroke array inside Canvas is frozen', async () => {
+    const { Stroke, Canvas } = await import('./fixtures/canvas.ts');
+    const { Pigment } = await import('./fixtures/pigment.ts');
+    const stroke = new Stroke({
+      width: 1,
+      pigments: [new Pigment({ name: 'blue', opacity: 1.0 })],
+      shade: 'LIGHT',
+    });
+    const canvas = new Canvas({
+      title: 'test',
+      finish: 'MATTE',
+      strokes: [stroke],
+      layers: [],
+      highlight: null,
+    });
+    expect(Object.isFrozen(canvas.strokes)).toBe(true);
+    expect(Object.isFrozen(canvas.strokes[0])).toBe(true);
+  });
+
+  it('equals works with plain class array elements', async () => {
+    const { Stroke } = await import('./fixtures/canvas.ts');
+    const { Pigment } = await import('./fixtures/pigment.ts');
+    const a = new Stroke({
+      width: 1,
+      pigments: [new Pigment({ name: 'red', opacity: 0.5 })],
+      shade: 'DARK',
+    });
+    const b = new Stroke({
+      width: 1,
+      pigments: [new Pigment({ name: 'red', opacity: 0.5 })],
+      shade: 'DARK',
+    });
+    expect(a.equals(b)).toBe(true);
+  });
+
+  it('equals detects Pigment differences', async () => {
+    const { Stroke } = await import('./fixtures/canvas.ts');
+    const { Pigment } = await import('./fixtures/pigment.ts');
+    const a = new Stroke({
+      width: 1,
+      pigments: [new Pigment({ name: 'red', opacity: 0.5 })],
+      shade: 'DARK',
+    });
+    const b = new Stroke({
+      width: 1,
+      pigments: [new Pigment({ name: 'red', opacity: 0.9 })],
+      shade: 'DARK',
+    });
+    expect(a.equals(b)).toBe(false);
+  });
+
+  it('equals handles nullable Stroke (highlight)', async () => {
+    const { Stroke, Canvas } = await import('./fixtures/canvas.ts');
+    const { Pigment } = await import('./fixtures/pigment.ts');
+    const stroke = new Stroke({
+      width: 1,
+      pigments: [new Pigment({ name: 'blue', opacity: 1.0 })],
+      shade: 'LIGHT',
+    });
+    const a = new Canvas({
+      title: 'test', finish: 'MATTE', strokes: [], layers: [], highlight: null,
+    });
+    const b = new Canvas({
+      title: 'test', finish: 'MATTE', strokes: [], layers: [], highlight: stroke,
+    });
+    expect(a.equals(b)).toBe(false);
+  });
+
+  it('with() on Canvas replaces title', async () => {
+    const { Stroke, Canvas } = await import('./fixtures/canvas.ts');
+    const { Pigment } = await import('./fixtures/pigment.ts');
+    const stroke = new Stroke({
+      width: 1,
+      pigments: [new Pigment({ name: 'blue', opacity: 1.0 })],
+      shade: 'LIGHT',
+    });
+    const canvas = new Canvas({
+      title: 'old', finish: 'MATTE', strokes: [stroke], layers: [], highlight: null,
+    });
+    const c2 = canvas.with({ title: 'new' });
+    expect(c2.title).toBe('new');
+    expect(c2.finish).toBe('MATTE');
+    expect(c2.strokes).toEqual(canvas.strokes);
+  });
+
+  it('with() on Canvas replaces strokes', async () => {
+    const { Stroke, Canvas } = await import('./fixtures/canvas.ts');
+    const { Pigment } = await import('./fixtures/pigment.ts');
+    const canvas = new Canvas({
+      title: 'test', finish: 'SATIN', strokes: [], layers: [], highlight: null,
+    });
+    const newStroke = new Stroke({
+      width: 5,
+      pigments: [new Pigment({ name: 'green', opacity: 0.7 })],
+      shade: 'MEDIUM',
+    });
+    const c2 = canvas.with({ strokes: [newStroke] });
+    expect(c2.strokes).toHaveLength(1);
+    expect(c2.strokes[0].width).toBe(5);
+  });
+
+  it('toString includes enum and class values', async () => {
+    const { Stroke } = await import('./fixtures/canvas.ts');
+    const { Pigment } = await import('./fixtures/pigment.ts');
+    const s = new Stroke({
+      width: 2,
+      pigments: [new Pigment({ name: 'red', opacity: 0.8 })],
+      shade: 'DARK',
+    });
+    expect(s.toString()).toContain('Stroke(');
+  });
+});
