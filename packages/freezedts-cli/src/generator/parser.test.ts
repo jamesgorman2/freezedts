@@ -425,4 +425,115 @@ describe('parseFreezedClasses', () => {
     const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
     expect(result.classes[0].properties[0].type).not.toContain('import(');
   });
+
+  it('extracts typeParameterDecl and typeParameterNames for simple generic <T>', () => {
+    const project = createTestProject(`
+      import { freezed } from 'freezedts';
+
+      @freezed()
+      class Box<T> {
+        constructor(params: { value: T }) {}
+      }
+    `);
+
+    const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
+    expect(result.classes[0].typeParameterDecl).toBe('T');
+    expect(result.classes[0].typeParameterNames).toBe('T');
+    expect(Object.hasOwn(result.classes[0], 'typeParameterImports')).toBe(false);
+  });
+
+  it('extracts constrained type parameter with import', () => {
+    const project = new Project({ useInMemoryFileSystem: true });
+    project.createSourceFile('bound.ts', 'export interface Identifiable { id: string; }');
+    project.createSourceFile(
+      'test.ts',
+      `
+      import { freezed } from 'freezedts';
+      import type { Identifiable } from './bound';
+
+      @freezed()
+      class Box<T extends Identifiable> {
+        constructor(params: { item: T }) {}
+      }
+    `,
+    );
+
+    const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
+    expect(result.classes[0].typeParameterDecl).toBe('T extends Identifiable');
+    expect(result.classes[0].typeParameterNames).toBe('T');
+    expect(result.classes[0].typeParameterImports).toHaveLength(1);
+    expect(result.classes[0].typeParameterImports![0].name).toBe('Identifiable');
+    expect(result.classes[0].typeParameterImports![0].absolutePath).toContain('bound.ts');
+  });
+
+  it('extracts multiple unconstrained type parameters', () => {
+    const project = createTestProject(`
+      import { freezed } from 'freezedts';
+
+      @freezed()
+      class Pair<A, B> {
+        constructor(params: { first: A; second: B }) {}
+      }
+    `);
+
+    const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
+    expect(result.classes[0].typeParameterDecl).toBe('A, B');
+    expect(result.classes[0].typeParameterNames).toBe('A, B');
+    expect(Object.hasOwn(result.classes[0], 'typeParameterImports')).toBe(false);
+  });
+
+  it('extracts multiple constrained type parameters with imports', () => {
+    const project = new Project({ useInMemoryFileSystem: true });
+    project.createSourceFile('bound.ts', 'export interface Identifiable { id: string; }');
+    project.createSourceFile(
+      'test.ts',
+      `
+      import { freezed } from 'freezedts';
+      import type { Identifiable } from './bound';
+
+      @freezed()
+      class Box<T extends Identifiable, Items extends T[]> {
+        constructor(params: { items: Items; primary: T }) {}
+      }
+    `,
+    );
+
+    const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
+    expect(result.classes[0].typeParameterDecl).toBe('T extends Identifiable, Items extends T[]');
+    expect(result.classes[0].typeParameterNames).toBe('T, Items');
+    expect(result.classes[0].typeParameterImports).toHaveLength(1);
+    expect(result.classes[0].typeParameterImports![0].name).toBe('Identifiable');
+  });
+
+  it('omits typeParameter fields for non-generic class', () => {
+    const project = createTestProject(`
+      import { freezed } from 'freezedts';
+
+      @freezed()
+      class Plain {
+        constructor(params: { name: string }) {}
+      }
+    `);
+
+    const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
+    expect(Object.hasOwn(result.classes[0], 'typeParameterDecl')).toBe(false);
+    expect(Object.hasOwn(result.classes[0], 'typeParameterNames')).toBe(false);
+    expect(Object.hasOwn(result.classes[0], 'typeParameterImports')).toBe(false);
+  });
+
+  it('extracts keyof constraint without generating imports', () => {
+    const project = createTestProject(`
+      import { freezed } from 'freezedts';
+
+      @freezed()
+      class Accessor<Type, Key extends keyof Type> {
+        constructor(params: { source: Type; key: Key }) {}
+      }
+    `);
+
+    const result = parseFreezedClasses(project.getSourceFile('test.ts')!);
+    expect(result.classes[0].typeParameterDecl).toBe('Type, Key extends keyof Type');
+    expect(result.classes[0].typeParameterNames).toBe('Type, Key');
+    expect(Object.hasOwn(result.classes[0], 'typeParameterImports')).toBe(false);
+  });
 });

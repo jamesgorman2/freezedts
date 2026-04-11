@@ -9,6 +9,7 @@ beforeAll(() => {
     path.resolve('tests/generic-freezed-class/fixtures/constrained.ts'),
     path.resolve('tests/generic-freezed-class/fixtures/property-accessor.ts'),
     path.resolve('tests/generic-freezed-class/fixtures/with-complex-generics.ts'),
+    path.resolve('tests/generic-freezed-class/fixtures/generic-with-defaults.ts'),
   ]);
 });
 
@@ -123,6 +124,16 @@ describe('@freezed class with simple generic <T>', () => {
     const c = new SimpleGeneric({ value: { id: 'xyz' }, label: 'test' });
     expect(a.equals(c)).toBe(false);
   });
+
+  it('With type declaration includes T parameter', () => {
+    const generated = readGenerated();
+    expect(generated).toContain('export type SimpleGenericWith<T, Self> = {');
+  });
+
+  it('get with() return type includes T parameter', () => {
+    const generated = readGenerated();
+    expect(generated).toContain('get with(): SimpleGenericWith<T, this>');
+  });
 });
 
 describe('@freezed class with constrained generic <T extends Identifiable>', () => {
@@ -188,6 +199,16 @@ describe('@freezed class with constrained generic <T extends Identifiable>', () 
     expect(typeImports).toEqual([
       "import type { Identifiable } from './bound.js';",
     ]);
+  });
+
+  it('With type declaration includes constrained T parameter', () => {
+    const generated = readGenerated();
+    expect(generated).toContain('export type ConstrainedWith<T extends Identifiable, Self> = {');
+  });
+
+  it('get with() return type uses T name without constraint', () => {
+    const generated = readGenerated();
+    expect(generated).toContain('get with(): ConstrainedWith<T, this>');
   });
 });
 
@@ -260,6 +281,16 @@ describe('@freezed class with <Type, Key extends keyof Type>', () => {
       l.startsWith('import type') && !l.includes('freezedts/runtime'),
     );
     expect(typeImports).toEqual([]);
+  });
+
+  it('With type declaration includes both type parameters with constraints', () => {
+    const generated = readGenerated();
+    expect(generated).toContain('export type PropertyAccessorWith<Type, Key extends keyof Type, Self> = {');
+  });
+
+  it('get with() return type uses parameter names without constraints', () => {
+    const generated = readGenerated();
+    expect(generated).toContain('get with(): PropertyAccessorWith<Type, Key, this>');
   });
 });
 
@@ -354,5 +385,67 @@ describe('@freezed class with complex generics <T extends U, Items extends T[]>'
     expect(typeImports).toEqual([
       "import type { Identifiable } from './bound.js';",
     ]);
+  });
+
+  it('With type declaration includes all constrained parameters', () => {
+    const generated = readGenerated();
+    expect(generated).toContain('export type WithComplexGenericsWith<T extends Identifiable, Items extends T[], Self> = {');
+  });
+
+  it('get with() return type uses parameter names without constraints', () => {
+    const generated = readGenerated();
+    expect(generated).toContain('get with(): WithComplexGenericsWith<T, Items, this>');
+  });
+});
+
+describe('@freezed class with generic <T> and field config defaults', () => {
+  function readGenerated(): string {
+    return fs.readFileSync(
+      path.resolve('tests/generic-freezed-class/fixtures/generic-with-defaults.freezed.ts'),
+      'utf-8',
+    );
+  }
+
+  it('generates without errors', () => {
+    const result = generate([
+      path.resolve('tests/generic-freezed-class/fixtures/generic-with-defaults.ts'),
+    ]);
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it('Params type includes <T> type parameter', () => {
+    const generated = readGenerated();
+    expect(generated).toContain('export type GenericWithDefaultsParams<T> =');
+  });
+
+  it('abstract class includes <T> type parameter', () => {
+    const generated = readGenerated();
+    expect(generated).toContain('export abstract class $GenericWithDefaults<T>');
+  });
+
+  it('resolved cast uses parameterized Params type', () => {
+    const generated = readGenerated();
+    expect(generated).toContain('Required<GenericWithDefaultsParams<T>>');
+  });
+
+  it('applies default when param is omitted', async () => {
+    const { GenericWithDefaults } = await import('./fixtures/generic-with-defaults.ts');
+    const g = new GenericWithDefaults({ value: 'hello' });
+    expect(g.value).toBe('hello');
+    expect(g.count).toBe(0);
+  });
+
+  it('uses provided value over default', async () => {
+    const { GenericWithDefaults } = await import('./fixtures/generic-with-defaults.ts');
+    const g = new GenericWithDefaults({ value: 'hello', count: 5 });
+    expect(g.count).toBe(5);
+  });
+
+  it('with() preserves defaulted value', async () => {
+    const { GenericWithDefaults } = await import('./fixtures/generic-with-defaults.ts');
+    const g1 = new GenericWithDefaults({ value: 'a', count: 3 });
+    const g2 = g1.with({ value: 'b' });
+    expect(g2.value).toBe('b');
+    expect(g2.count).toBe(3);
   });
 });

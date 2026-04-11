@@ -52,19 +52,22 @@ function emitParamsType(cls: ParsedFreezedClass): string {
       return `  ${p.name}${optional ? '?' : ''}: ${type};`;
     })
     .join('\n');
-  return `export type ${cls.className}Params = {\n${fields}\n};`;
+  const typeDecl = cls.typeParameterDecl ? `<${cls.typeParameterDecl}>` : '';
+  return `export type ${cls.className}Params${typeDecl} = {\n${fields}\n};`;
 }
 
 function emitWithType(cls: ParsedFreezedClass): string {
+  const typeNames = cls.typeParameterNames ? `<${cls.typeParameterNames}>` : '';
+  const typePrefix = cls.typeParameterDecl ? `${cls.typeParameterDecl}, ` : '';
   const freezedProps = cls.properties.filter(p => p.isFreezed);
   const members = freezedProps
     .map(p => `  ${p.name}: ${p.type.replace(/\s*\|\s*undefined$/, '').trim()}With<Self>;`)
     .join('\n');
-  const callSig = `  (overrides: Partial<${cls.className}Params>): Self;`;
+  const callSig = `  (overrides: Partial<${cls.className}Params${typeNames}>): Self;`;
   if (freezedProps.length === 0) {
-    return `export type ${cls.className}With<Self> = {\n${callSig}\n};`;
+    return `export type ${cls.className}With<${typePrefix}Self> = {\n${callSig}\n};`;
   }
-  return `export type ${cls.className}With<Self> = {\n${callSig}\n${members}\n};`;
+  return `export type ${cls.className}With<${typePrefix}Self> = {\n${callSig}\n${members}\n};`;
 }
 
 function emitClassBody(cls: ParsedFreezedClass): string {
@@ -97,10 +100,13 @@ function emitClassBody(cls: ParsedFreezedClass): string {
   if (cls.equal !== false) methods.push(emitEqualsMethod(cls));
   if (cls.toString !== false) methods.push(emitToStringMethod(cls));
 
-  return `export abstract class ${cls.generatedClassName} {
+  const typeDecl = cls.typeParameterDecl ? `<${cls.typeParameterDecl}>` : '';
+  const typeNames = cls.typeParameterNames ? `<${cls.typeParameterNames}>` : '';
+
+  return `export abstract class ${cls.generatedClassName}${typeDecl} {
 ${readonlyFields}
 
-  constructor(params: ${cls.className}Params) {
+  constructor(params: ${cls.className}Params${typeNames}) {
 ${fieldConfigBlock}${assignments}
     Object.freeze(this);
   }
@@ -110,9 +116,10 @@ ${methods.join('\n\n')}
 }
 
 function emitFieldConfigBlock(cls: ParsedFreezedClass): string {
+  const typeNames = cls.typeParameterNames ? `<${cls.typeParameterNames}>` : '';
   const lines = [
     `    const __fields = (new.target as any)[Symbol.for('freezedts:options')]?.fields ?? {};`,
-    `    const resolved = { ...params } as Required<${cls.className}Params>;`,
+    `    const resolved = { ...params } as Required<${cls.className}Params${typeNames}>;`,
   ];
 
   for (const p of cls.properties) {
@@ -143,7 +150,8 @@ function emitFieldConfigBlock(cls: ParsedFreezedClass): string {
 }
 
 function emitWithGetter(cls: ParsedFreezedClass): string {
-  return `  get with(): ${cls.className}With<this> {
+  const typePrefix = cls.typeParameterNames ? `${cls.typeParameterNames}, ` : '';
+  return `  get with(): ${cls.className}With<${typePrefix}this> {
     return createWithProxy(this);
   }`;
 }

@@ -979,4 +979,119 @@ describe('emitFreezedFile', () => {
     expect(output).toContain('Object.is(this.count, other.count)');
     expect(output).not.toContain('deepEqual');
   });
+
+  it('generates parameterized Params, With, class, constructor and getter for simple generic', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Box',
+        generatedClassName: '$Box',
+        hasDefaults: false, hasAsserts: false,
+        equalityMode: 'deep' as const,
+        typeParameterDecl: 'T',
+        typeParameterNames: 'T',
+        properties: [
+          { name: 'value', type: 'T', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'label', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+        ],
+      },
+    ];
+    const output = emitFreezedFile(classes);
+    expect(output).toContain('export type BoxParams<T> = {');
+    expect(output).toContain('export type BoxWith<T, Self> = {');
+    expect(output).toContain('Partial<BoxParams<T>>');
+    expect(output).toContain('export abstract class $Box<T> {');
+    expect(output).toContain('constructor(params: BoxParams<T>)');
+    expect(output).toContain('get with(): BoxWith<T, this>');
+  });
+
+  it('generates constrained type parameters in declarations but names in usage', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Box',
+        generatedClassName: '$Box',
+        hasDefaults: false, hasAsserts: false,
+        equalityMode: 'deep' as const,
+        typeParameterDecl: 'T extends Identifiable',
+        typeParameterNames: 'T',
+        properties: [
+          { name: 'item', type: 'T', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+        ],
+      },
+    ];
+    const output = emitFreezedFile(classes);
+    // Declarations use the constraint
+    expect(output).toContain('BoxParams<T extends Identifiable>');
+    expect(output).toContain('BoxWith<T extends Identifiable, Self>');
+    expect(output).toContain('abstract class $Box<T extends Identifiable>');
+    // Usage sites use just the name
+    expect(output).toContain('Partial<BoxParams<T>>');
+    expect(output).toContain('constructor(params: BoxParams<T>)');
+    expect(output).toContain('get with(): BoxWith<T, this>');
+  });
+
+  it('generates multi-parameter generics correctly', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Container',
+        generatedClassName: '$Container',
+        hasDefaults: false, hasAsserts: false,
+        equalityMode: 'deep' as const,
+        typeParameterDecl: 'T, Items extends T[]',
+        typeParameterNames: 'T, Items',
+        properties: [
+          { name: 'items', type: 'Items', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'primary', type: 'T', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'label', type: 'string', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+        ],
+      },
+    ];
+    const output = emitFreezedFile(classes);
+    expect(output).toContain('ContainerParams<T, Items extends T[]>');
+    expect(output).toContain('ContainerWith<T, Items extends T[], Self>');
+    expect(output).toContain('Partial<ContainerParams<T, Items>>');
+    expect(output).toContain('abstract class $Container<T, Items extends T[]>');
+    expect(output).toContain('constructor(params: ContainerParams<T, Items>)');
+    expect(output).toContain('get with(): ContainerWith<T, Items, this>');
+  });
+
+  it('generates parameterized resolved cast in field config block', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Counter',
+        generatedClassName: '$Counter',
+        hasDefaults: true, hasAsserts: false,
+        equalityMode: 'deep' as const,
+        typeParameterDecl: 'T',
+        typeParameterNames: 'T',
+        properties: [
+          { name: 'value', type: 'T', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'count', type: 'number', optional: false, hasDefault: true, hasAssert: false, hasMessage: false, isFreezed: false },
+        ],
+      },
+    ];
+    const output = emitFreezedFile(classes);
+    expect(output).toContain('const resolved = { ...params } as Required<CounterParams<T>>;');
+    expect(output).toContain('CounterParams<T>');
+  });
+
+  it('omits generic parameters when typeParameterDecl is absent (regression guard)', () => {
+    const classes: ParsedFreezedClass[] = [
+      {
+        className: 'Counter',
+        generatedClassName: '$Counter',
+        hasDefaults: true, hasAsserts: false,
+        equalityMode: 'deep' as const,
+        properties: [
+          { name: 'value', type: 'unknown', optional: false, hasDefault: false, hasAssert: false, hasMessage: false, isFreezed: false },
+          { name: 'count', type: 'number', optional: false, hasDefault: true, hasAssert: false, hasMessage: false, isFreezed: false },
+        ],
+      },
+    ];
+    const output = emitFreezedFile(classes);
+    expect(output).toContain('export type CounterParams = {');
+    expect(output).toContain('export abstract class $Counter {');
+    expect(output).toContain('CounterWith<Self>');
+    expect(output).toContain('const resolved = { ...params } as Required<CounterParams>;');
+    expect(output).toContain('get with(): CounterWith<this>');
+  });
 });

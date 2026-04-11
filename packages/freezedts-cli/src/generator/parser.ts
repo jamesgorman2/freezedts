@@ -27,6 +27,9 @@ export interface ParsedFreezedClass {
   copyWith?: boolean;
   equal?: boolean;
   toString?: boolean;
+  typeParameterDecl?: string;
+  typeParameterNames?: string;
+  typeParameterImports?: TypeImport[];
 }
 
 export interface ParseWarning {
@@ -52,6 +55,32 @@ export function parseFreezedClasses(sourceFile: SourceFile): ParseResult {
 
     const className = cls.getName();
     if (!className) continue;
+
+    // Extract generic type parameters
+    const typeParams = cls.getTypeParameters();
+    let typeParameterDecl: string | undefined;
+    let typeParameterNames: string | undefined;
+    let typeParameterImports: TypeImport[] | undefined;
+    if (typeParams.length > 0) {
+      typeParameterDecl = typeParams.map(tp => tp.getText()).join(', ');
+      typeParameterNames = typeParams.map(tp => tp.getName()).join(', ');
+      const typeParamNameSet = new Set(typeParams.map(tp => tp.getName()));
+      const importMap = buildSourceImportMap(sourceFile);
+      const tpImports: TypeImport[] = [];
+      for (const tp of typeParams) {
+        const constraint = tp.getConstraint();
+        if (!constraint) continue;
+        const identifiers = extractTypeIdentifiers(constraint.getText());
+        for (const id of identifiers) {
+          if (typeParamNameSet.has(id)) continue;
+          const absolutePath = importMap.get(id);
+          if (absolutePath) {
+            tpImports.push({ name: id, absolutePath });
+          }
+        }
+      }
+      if (tpImports.length > 0) typeParameterImports = tpImports;
+    }
 
     const constructor = cls.getConstructors()[0];
     if (!constructor) {
@@ -87,6 +116,9 @@ export function parseFreezedClasses(sourceFile: SourceFile): ParseResult {
       ...(copyWith !== undefined && { copyWith }),
       ...(equal !== undefined && { equal }),
       ...(toStringOpt !== undefined && { toString: toStringOpt }),
+      ...(typeParameterDecl && { typeParameterDecl }),
+      ...(typeParameterNames && { typeParameterNames }),
+      ...(typeParameterImports && { typeParameterImports }),
     });
   }
 

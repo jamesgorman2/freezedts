@@ -229,6 +229,21 @@ export function generate(filePaths: string[], config?: ResolvedConfig): Generate
             }
           }
         }
+
+        // Pass 4: imports from type parameter constraints
+        if (cls.typeParameterImports) {
+          for (const ti of cls.typeParameterImports) {
+            const relativePath = path.relative(
+              path.dirname(absolutePath),
+              ti.absolutePath.replace(/\.ts$/, '.js'),
+            );
+            const importPath = relativePath.startsWith('.')
+              ? relativePath.replace(/\\/g, '/')
+              : './' + relativePath.replace(/\\/g, '/');
+            if (!imports.has(importPath)) imports.set(importPath, new Set());
+            imports.get(importPath)!.add(ti.name);
+          }
+        }
       }
       if (imports.size > 0) {
         const importLines = [...imports.entries()]
