@@ -2,7 +2,7 @@ import { freezed } from '../../../packages/freezedts/src/runtime/freezed.ts';
 import { $PropertyAccessor } from './property-accessor.freezed.ts';
 
 @freezed()
-class PropertyAccessor<Type, Key extends keyof Type> extends $PropertyAccessor<Type, Key extends keyof Type> {
+class PropertyAccessor<Type, Key extends keyof Type> extends $PropertyAccessor<Type, Key> {
   constructor(params: { source: Type; key: Key }) {
     super(params);
   }

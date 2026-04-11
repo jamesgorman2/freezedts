@@ -77,12 +77,12 @@ describe('@freezed class with simple generic <T>', () => {
 
   it('abstract class declaration includes <T> type parameter', () => {
     const generated = readGenerated();
-    expect(generated).toMatch(/export abstract class \$SimpleGeneric<T>/);
+    expect(generated).toContain("export abstract class $SimpleGeneric<T>");
   });
 
   it('Params type includes <T> type parameter', () => {
     const generated = readGenerated();
-    expect(generated).toMatch(/export type SimpleGenericParams<T>\s*=/);
+    expect(generated).toContain("export type SimpleGenericParams<T> =");
   });
 
   it('With type references parameterized Params', () => {
@@ -92,7 +92,7 @@ describe('@freezed class with simple generic <T>', () => {
 
   it('constructor parameter uses parameterized Params type', () => {
     const generated = readGenerated();
-    expect(generated).toMatch(/constructor\(params:\s*SimpleGenericParams<T>\)/);
+    expect(generated).toContain("constructor(params: SimpleGenericParams<T>)");
   });
 
   it('does not generate type imports for unconstrained generic', () => {
@@ -162,12 +162,12 @@ describe('@freezed class with constrained generic <T extends Identifiable>', () 
 
   it('abstract class declaration includes <T extends Identifiable> type parameter', () => {
     const generated = readGenerated();
-    expect(generated).toMatch(/export abstract class \$Constrained<T extends Identifiable>/);
+    expect(generated).toContain("export abstract class $Constrained<T extends Identifiable>");
   });
 
   it('Params type includes <T extends Identifiable> type parameter', () => {
     const generated = readGenerated();
-    expect(generated).toMatch(/export type ConstrainedParams<T extends Identifiable>\s*=/);
+    expect(generated).toContain("export type ConstrainedParams<T extends Identifiable> =");
   });
 
   it('With type references parameterized Params', () => {
@@ -177,7 +177,7 @@ describe('@freezed class with constrained generic <T extends Identifiable>', () 
 
   it('constructor parameter uses parameterized Params type', () => {
     const generated = readGenerated();
-    expect(generated).toMatch(/constructor\(params:\s*ConstrainedParams<T>\)/);
+    expect(generated).toContain("constructor(params: ConstrainedParams<T>)");
   });
 
   it('imports Identifiable for the type constraint', () => {
@@ -236,12 +236,12 @@ describe('@freezed class with <Type, Key extends keyof Type>', () => {
 
   it('abstract class declaration includes <Type, Key extends keyof Type> type parameters', () => {
     const generated = readGenerated();
-    expect(generated).toMatch(/export abstract class \$PropertyAccessor<Type, Key extends keyof Type>/);
+    expect(generated).toContain("export abstract class $PropertyAccessor<Type, Key extends keyof Type>");
   });
 
   it('Params type includes <Type, Key extends keyof Type> type parameters', () => {
     const generated = readGenerated();
-    expect(generated).toMatch(/export type PropertyAccessorParams<Type, Key extends keyof Type>\s*=/);
+    expect(generated).toContain("export type PropertyAccessorParams<Type, Key extends keyof Type> =");
   });
 
   it('With type references parameterized Params', () => {
@@ -251,7 +251,7 @@ describe('@freezed class with <Type, Key extends keyof Type>', () => {
 
   it('constructor parameter uses parameterized Params type', () => {
     const generated = readGenerated();
-    expect(generated).toMatch(/constructor\(params:\s*PropertyAccessorParams<Type, Key>\)/);
+    expect(generated).toContain("constructor(params: PropertyAccessorParams<Type, Key>)");
   });
 
   it('does not generate type imports for keyof constraint', () => {
@@ -328,12 +328,12 @@ describe('@freezed class with complex generics <T extends U, Items extends T[]>'
 
   it('abstract class declaration includes <T extends Identifiable, Items extends T[]> type parameters', () => {
     const generated = readGenerated();
-    expect(generated).toMatch(/export abstract class \$WithComplexGenerics<T extends Identifiable, Items extends T\[\]>/);
+    expect(generated).toContain("export abstract class $WithComplexGenerics<T extends Identifiable, Items extends T[]>");
   });
 
   it('Params type includes <T extends Identifiable, Items extends T[]> type parameters', () => {
     const generated = readGenerated();
-    expect(generated).toMatch(/export type WithComplexGenericsParams<T extends Identifiable, Items extends T\[\]>\s*=/);
+    expect(generated).toContain("export type WithComplexGenericsParams<T extends Identifiable, Items extends T[]> =");
   });
 
   it('With type references parameterized Params', () => {
@@ -343,7 +343,7 @@ describe('@freezed class with complex generics <T extends U, Items extends T[]>'
 
   it('constructor parameter uses parameterized Params type', () => {
     const generated = readGenerated();
-    expect(generated).toMatch(/constructor\(params:\s*WithComplexGenericsParams<T, Items>\)/);
+    expect(generated).toContain("constructor(params: WithComplexGenericsParams<T, Items>)");
   });
 
   it('imports Identifiable for the type constraint', () => {

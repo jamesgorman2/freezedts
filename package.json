@@ -4,7 +4,7 @@
   "engines": { "node": ">=22" },
   "scripts": {
     "build": "npm run build --workspaces",
-    "test": "bun test",
+    "test": "bun test --only-failures",
     "test:watch": "bun test --watch",
     "generate": "bun packages/freezedts-cli/src/cli.ts"
   },

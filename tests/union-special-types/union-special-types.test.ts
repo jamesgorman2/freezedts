@@ -34,7 +34,7 @@ describe('union with undefined and any', () => {
 
   it('imports Alpha for the union with undefined', () => {
     const generated = readGenerated();
-    expect(generated).toEqual("import type { Alpha } from './alpha.js';");
+    expect(generated).toContain("import type { Alpha } from './alpha.js';");
   });
 
   it('does not import undefined or any', () => {
