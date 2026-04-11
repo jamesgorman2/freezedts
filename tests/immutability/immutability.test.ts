@@ -8,6 +8,7 @@ beforeAll(() => {
   const files = [
     path.join(fixturesDir, 'person.ts'),
     path.join(fixturesDir, 'multi.ts'),
+    path.join(fixturesDir, 'with-import.ts'),
   ];
   generate(files);
 });
@@ -69,5 +70,38 @@ describe('immutability behavior', () => {
     expect(c).toBeInstanceOf(Contact);
     expect(Object.isFrozen(a)).toBe(true);
     expect(Object.isFrozen(c)).toBe(true);
+  });
+});
+
+describe('immutability -- imported types', () => {
+  it('creates instance with imported type field', async () => {
+    const { Locatable } = await import('./fixtures/with-import.ts');
+    const l = new Locatable({ label: 'a', position: { x: 1, y: 2 } });
+    expect(l.position.x).toBe(1);
+    expect(l.position.y).toBe(2);
+  });
+
+  it('instance is frozen', async () => {
+    const { Locatable } = await import('./fixtures/with-import.ts');
+    const l = new Locatable({ label: 'a', position: { x: 1, y: 2 } });
+    expect(Object.isFrozen(l)).toBe(true);
+  });
+
+  it('imported type field value is deep-frozen', async () => {
+    const { Locatable } = await import('./fixtures/with-import.ts');
+    const l = new Locatable({ label: 'a', position: { x: 1, y: 2 } });
+    expect(Object.isFrozen(l.position)).toBe(true);
+  });
+
+  it('mutating imported type field value throws', async () => {
+    const { Locatable } = await import('./fixtures/with-import.ts');
+    const l = new Locatable({ label: 'a', position: { x: 1, y: 2 } });
+    expect(() => { (l.position as any).x = 99; }).toThrow();
+  });
+
+  it('reassigning imported type field throws', async () => {
+    const { Locatable } = await import('./fixtures/with-import.ts');
+    const l = new Locatable({ label: 'a', position: { x: 1, y: 2 } });
+    expect(() => { (l as any).position = { x: 9, y: 9 }; }).toThrow();
   });
 });
