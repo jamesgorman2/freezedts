@@ -8,6 +8,7 @@ beforeAll(() => {
   generate([
     path.join(fixturesDir, 'person.ts'),
     path.join(fixturesDir, 'multi.ts'),
+    path.join(fixturesDir, 'with-import.ts'),
   ]);
 });
 
@@ -94,5 +95,42 @@ describe('shallow with() behavior', () => {
     expect(c2.name).toBe('Alice');
     expect(c2.email).toBe('alice@new.com');
     expect(c2).toBeInstanceOf(Contact);
+  });
+});
+
+describe('shallow copy -- imported types', () => {
+  it('with() replaces imported-type field', async () => {
+    const { Locatable } = await import('./fixtures/with-import.ts');
+    const l = new Locatable({ label: 'a', position: { x: 1, y: 2 } });
+    const l2 = l.with({ position: { x: 9, y: 9 } });
+    expect(l2.position).toEqual({ x: 9, y: 9 });
+  });
+
+  it('with() preserves imported-type field when not overridden', async () => {
+    const { Locatable } = await import('./fixtures/with-import.ts');
+    const l = new Locatable({ label: 'a', position: { x: 1, y: 2 } });
+    const l2 = l.with({ label: 'new' });
+    expect(l2.position).toEqual({ x: 1, y: 2 });
+  });
+
+  it('returned instance has frozen imported-type field', async () => {
+    const { Locatable } = await import('./fixtures/with-import.ts');
+    const l = new Locatable({ label: 'a', position: { x: 1, y: 2 } });
+    const l2 = l.with({ position: { x: 9, y: 9 } });
+    expect(Object.isFrozen(l2.position)).toBe(true);
+  });
+
+  it('with() on imported-type field produces a different instance', async () => {
+    const { Locatable } = await import('./fixtures/with-import.ts');
+    const l = new Locatable({ label: 'a', position: { x: 1, y: 2 } });
+    const l2 = l.with({ position: { x: 9, y: 9 } });
+    expect(l2).not.toBe(l);
+  });
+
+  it('original imported-type field is unchanged after with()', async () => {
+    const { Locatable } = await import('./fixtures/with-import.ts');
+    const l = new Locatable({ label: 'a', position: { x: 1, y: 2 } });
+    l.with({ position: { x: 9, y: 9 } });
+    expect(l.position.x).toBe(1);
   });
 });
