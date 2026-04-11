@@ -167,4 +167,36 @@ describe('mixed freezed and non-freezed imports', () => {
     expect(generated).toContain('address: Address;');
     expect(generated).not.toContain('address: $Address;');
   });
+
+  it('equals detects PhoneNumber differences', async () => {
+    const { Address } = await import('./fixtures/address.ts');
+    const { PhoneNumber } = await import('./fixtures/phonenumber.ts');
+    const { Person } = await import('./fixtures/person.ts');
+    const addr = new Address({ street: '1 Elm St', state: 'CA' });
+    const a = new Person({
+      name: 'Alice', address: addr,
+      phone: new PhoneNumber({ areaCode: '415', phoneNumber: '5551111' }),
+    });
+    const b = new Person({
+      name: 'Alice', address: addr,
+      phone: new PhoneNumber({ areaCode: '212', phoneNumber: '5551111' }),
+    });
+    expect(a.equals(b)).toBe(false);
+  });
+
+  it('equals returns true when PhoneNumbers are structurally equal', async () => {
+    const { Address } = await import('./fixtures/address.ts');
+    const { PhoneNumber } = await import('./fixtures/phonenumber.ts');
+    const { Person } = await import('./fixtures/person.ts');
+    const addr = new Address({ street: '1 Elm St', state: 'CA' });
+    const a = new Person({
+      name: 'Alice', address: addr,
+      phone: new PhoneNumber({ areaCode: '415', phoneNumber: '5551111' }),
+    });
+    const b = new Person({
+      name: 'Alice', address: addr,
+      phone: new PhoneNumber({ areaCode: '415', phoneNumber: '5551111' }),
+    });
+    expect(a.equals(b)).toBe(true);
+  });
 });

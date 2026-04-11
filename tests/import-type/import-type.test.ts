@@ -94,4 +94,53 @@ describe('importing types', () => {
     expect(generated).toContain('tshirtSize: TshirtSize;');
     expect(generated).not.toContain('tshirtSize: $TshirtSize;');
   });
+
+  it('imported class field is frozen', async () => {
+    const { PhoneNumber } = await import('./fixtures/phonenumber.ts');
+    const { Person } = await import('./fixtures/person.ts');
+    const person = new Person({
+      name: 'Alice',
+      tshirtSize: 'M',
+      phone: new PhoneNumber({ areaCode: '415', phoneNumber: '5559999' }),
+    });
+    expect(Object.isFrozen(person.phone)).toBe(true);
+  });
+
+  it('with() replaces imported class field', async () => {
+    const { PhoneNumber } = await import('./fixtures/phonenumber.ts');
+    const { Person } = await import('./fixtures/person.ts');
+    const origPhone = new PhoneNumber({ areaCode: '415', phoneNumber: '5559999' });
+    const person = new Person({ name: 'Bob', tshirtSize: 'L', phone: origPhone });
+    const p2 = person.with({ phone: new PhoneNumber({ areaCode: '555', phoneNumber: '1234' }) });
+    expect(p2.phone.areaCode).toBe('555');
+    expect(person.phone.areaCode).toBe('415');
+  });
+
+  it('equals detects imported class field difference', async () => {
+    const { PhoneNumber } = await import('./fixtures/phonenumber.ts');
+    const { Person } = await import('./fixtures/person.ts');
+    const a = new Person({
+      name: 'Dan', tshirtSize: 'XL',
+      phone: new PhoneNumber({ areaCode: '303', phoneNumber: '5551111' }),
+    });
+    const b = new Person({
+      name: 'Dan', tshirtSize: 'XL',
+      phone: new PhoneNumber({ areaCode: '415', phoneNumber: '5551111' }),
+    });
+    expect(a.equals(b)).toBe(false);
+  });
+
+  it('equals returns true when imported class fields are structurally equal', async () => {
+    const { PhoneNumber } = await import('./fixtures/phonenumber.ts');
+    const { Person } = await import('./fixtures/person.ts');
+    const a = new Person({
+      name: 'Eve', tshirtSize: 'S',
+      phone: new PhoneNumber({ areaCode: '206', phoneNumber: '5552222' }),
+    });
+    const b = new Person({
+      name: 'Eve', tshirtSize: 'S',
+      phone: new PhoneNumber({ areaCode: '206', phoneNumber: '5552222' }),
+    });
+    expect(a.equals(b)).toBe(true);
+  });
 });
