@@ -8,6 +8,7 @@ beforeAll(() => {
   generate([
     path.join(fixturesDir, 'equality.ts'),
     path.join(fixturesDir, 'nested.ts'),
+    path.join(fixturesDir, 'cross-module.ts'),
   ]);
 });
 
@@ -114,5 +115,27 @@ describe('equals() — nested @freezed types', () => {
     const a = new Employee({ name: 'Alice', address: addr });
     const b = new Employee({ name: 'Alice', address: addr });
     expect(a.equals(b)).toBe(true);
+  });
+});
+
+describe('equality -- cross-module imported types', () => {
+  it('deep equality with cross-module imported type', async () => {
+    const { Locatable } = await import('./fixtures/cross-module.ts');
+    const a = new Locatable({ name: 'a', position: { x: 1, y: 2 } });
+    const b = new Locatable({ name: 'a', position: { x: 1, y: 2 } });
+    expect(a.equals(b)).toBe(true);
+  });
+
+  it('detects difference in cross-module imported field', async () => {
+    const { Locatable } = await import('./fixtures/cross-module.ts');
+    const a = new Locatable({ name: 'a', position: { x: 1, y: 2 } });
+    const b = new Locatable({ name: 'a', position: { x: 1, y: 9 } });
+    expect(a.equals(b)).toBe(false);
+  });
+
+  it('works with same reference for imported field', async () => {
+    const { Locatable } = await import('./fixtures/cross-module.ts');
+    const a = new Locatable({ name: 'a', position: { x: 1, y: 2 } });
+    expect(a.equals(a)).toBe(true);
   });
 });

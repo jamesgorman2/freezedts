@@ -3,7 +3,10 @@ import { generate } from '../../packages/freezedts-cli/src/generator/generator.j
 import * as path from 'node:path';
 
 beforeAll(() => {
-  generate([path.resolve('tests/equality/fixtures/map-set-equality.ts')]);
+  generate([
+    path.resolve('tests/equality/fixtures/map-set-equality.ts'),
+    path.resolve('tests/equality/fixtures/map-set-imported.ts'),
+  ]);
 });
 
 describe('Map/Set equality', () => {
@@ -39,6 +42,34 @@ describe('Map/Set equality', () => {
     const { ScoreBoard } = await import('./fixtures/map-set-equality.ts');
     const a = new ScoreBoard({ scores: new Map([['a', 1], ['b', 2]]), tags: new Set() });
     const b = new ScoreBoard({ scores: new Map([['a', 1]]), tags: new Set() });
+    expect(a.equals(b)).toBe(false);
+  });
+});
+
+describe('Map with imported-type values', () => {
+  it('equal entries compare equal', async () => {
+    const { Registry } = await import('./fixtures/map-set-imported.ts');
+    const a = new Registry({
+      entries: new Map([['origin', { x: 0, y: 0 }]]),
+      coordSet: new Set(['a']),
+    });
+    const b = new Registry({
+      entries: new Map([['origin', { x: 0, y: 0 }]]),
+      coordSet: new Set(['a']),
+    });
+    expect(a.equals(b)).toBe(true);
+  });
+
+  it('different Coord values compare not equal', async () => {
+    const { Registry } = await import('./fixtures/map-set-imported.ts');
+    const a = new Registry({
+      entries: new Map([['origin', { x: 0, y: 0 }]]),
+      coordSet: new Set(['a']),
+    });
+    const b = new Registry({
+      entries: new Map([['origin', { x: 9, y: 9 }]]),
+      coordSet: new Set(['a']),
+    });
     expect(a.equals(b)).toBe(false);
   });
 });
