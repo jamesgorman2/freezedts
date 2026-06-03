@@ -12,6 +12,13 @@ dist
 # Worktrees
 .worktrees/
 
+# Superpowers brainstorm sessions
+.superpowers/
+
+*.db
+*.db-journal
+**/.scratch/
+
 # Miscellaneous
 *.class
 *.log
