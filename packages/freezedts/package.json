@@ -1,6 +1,6 @@
 {
   "name": "freezedts",
-  "version": "0.15.1",
+  "version": "0.15.2",
   "type": "module",
   "engines": { "node": ">=22" },
   "description": "Immutable class management for TypeScript via code generation",
