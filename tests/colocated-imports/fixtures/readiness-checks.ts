@@ -7,7 +7,7 @@ export interface StatusContainer {
   s: CheckStatus;
 }
 export class StatusClass {
-  s: StatusContainer;
+  s?: StatusContainer;
 }
 
 export type InnerType = any;
