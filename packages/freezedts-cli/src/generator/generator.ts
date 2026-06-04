@@ -97,7 +97,7 @@ export function generate(filePaths: string[], config?: ResolvedConfig): Generate
   const warnings: string[] = [];
 
   // Phase 1: Parse all files
-  const parsed = new Map<string, { absolutePath: string; classes: ReturnType<typeof parseFreezedClasses>['classes'] }>();
+  const parsed = new Map<string, { absolutePath: string; classes: ReturnType<typeof parseFreezedClasses>['classes']; localTypes: Map<string, 'type' | 'value'> }>();
 
   for (const filePath of filePaths) {
     const absolutePath = path.resolve(filePath);
@@ -112,7 +112,24 @@ export function generate(filePaths: string[], config?: ResolvedConfig): Generate
         errors.push(...validationErrors.map(e => `${filePath}: ${e}`));
       }
       if (classes.length > 0) {
-        parsed.set(filePath, { absolutePath, classes });
+        // Collect same-file exported non-freezed local declarations
+        const localTypes = new Map<string, 'type' | 'value'>();
+        for (const ta of sourceFile.getTypeAliases()) {
+          if (ta.isExported()) localTypes.set(ta.getName(), 'type');
+        }
+        for (const iface of sourceFile.getInterfaces()) {
+          if (iface.isExported()) localTypes.set(iface.getName(), 'type');
+        }
+        for (const en of sourceFile.getEnums()) {
+          if (en.isExported()) localTypes.set(en.getName(), 'value');
+        }
+        for (const cd of sourceFile.getClasses()) {
+          const name = cd.getName();
+          if (!name || !cd.isExported()) continue;
+          if (cd.getDecorators().some(d => d.getName() === 'freezed')) continue;
+          localTypes.set(name, 'value');
+        }
+        parsed.set(filePath, { absolutePath, classes, localTypes });
       }
     } catch (e) {
       errors.push(`${filePath}: ${e instanceof Error ? e.message : String(e)}`);
@@ -167,12 +184,23 @@ export function generate(filePaths: string[], config?: ResolvedConfig): Generate
   }
 
   // Phase 4: Emit and write
-  for (const [filePath, { absolutePath, classes }] of parsed) {
+  for (const [filePath, { absolutePath, classes, localTypes }] of parsed) {
     try {
       let output = emitFreezedFile(classes);
 
-      // Collect cross-file imports (all use import type)
-      const imports = new Map<string, Set<string>>();
+      // Collect imports, tracking per-symbol whether it is type-only (erasable).
+      // Map<importPath, Map<symbolName, isTypeOnly>>
+      const imports = new Map<string, Map<string, boolean>>();
+      const addImport = (importPath: string, name: string, isTypeOnly: boolean) => {
+        let symbols = imports.get(importPath);
+        if (!symbols) {
+          symbols = new Map();
+          imports.set(importPath, symbols);
+        }
+        const existing = symbols.get(name);
+        // Once a symbol is recorded as a value import, keep it a value import.
+        symbols.set(name, existing === undefined ? isTypeOnly : existing && isTypeOnly);
+      };
       const ownFreezedPath = './' + path.basename(absolutePath, '.ts') + '.freezed.js';
       for (const cls of classes) {
         for (const prop of cls.properties) {
@@ -188,8 +216,7 @@ export function generate(filePaths: string[], config?: ResolvedConfig): Generate
               const importPath = relativePath.startsWith('.')
                 ? relativePath.replace(/\\/g, '/')
                 : './' + relativePath.replace(/\\/g, '/');
-              if (!imports.has(importPath)) imports.set(importPath, new Set());
-              imports.get(importPath)!.add(ti.name);
+              addImport(importPath, ti.name, true);
               importedNames.add(ti.name);
             }
           }
@@ -213,8 +240,19 @@ export function generate(filePaths: string[], config?: ResolvedConfig): Generate
               } else {
                 importPath = './' + path.basename(absolutePath, '.ts') + '.js';
               }
-              if (!imports.has(importPath)) imports.set(importPath, new Set());
-              imports.get(importPath)!.add(id);
+              addImport(importPath, id, true);
+              importedNames.add(id);
+            }
+          }
+
+          // Pass 2b: same-file exported non-freezed local declarations
+          for (const id of allIdentifiers) {
+            if (importedNames.has(id)) continue;
+            if (classToFile.get(id)) continue;
+            const kind = localTypes.get(id);
+            if (kind) {
+              const importPath = './' + path.basename(absolutePath, '.ts') + '.js';
+              addImport(importPath, id, kind === 'type');
               importedNames.add(id);
             }
           }
@@ -224,8 +262,7 @@ export function generate(filePaths: string[], config?: ResolvedConfig): Generate
             const baseType = extractBaseTypeName(prop.type);
             const freezedImportPath = prop.importFrom.replace(/\.js$/, '.freezed.js');
             if (freezedImportPath !== ownFreezedPath) {
-              if (!imports.has(freezedImportPath)) imports.set(freezedImportPath, new Set());
-              imports.get(freezedImportPath)!.add(`${baseType}With`);
+              addImport(freezedImportPath, `${baseType}With`, true);
             }
           }
         }
@@ -240,17 +277,27 @@ export function generate(filePaths: string[], config?: ResolvedConfig): Generate
             const importPath = relativePath.startsWith('.')
               ? relativePath.replace(/\\/g, '/')
               : './' + relativePath.replace(/\\/g, '/');
-            if (!imports.has(importPath)) imports.set(importPath, new Set());
-            imports.get(importPath)!.add(ti.name);
+            addImport(importPath, ti.name, true);
           }
         }
       }
       if (imports.size > 0) {
         const importLines = [...imports.entries()]
           .sort(([a], [b]) => a.localeCompare(b))
-          .map(([importPath, symbols]) =>
-            `import type { ${[...symbols].sort().join(', ')} } from '${importPath}';`,
-          )
+          .map(([importPath, symbols]) => {
+            const typeOnly: string[] = [];
+            const value: string[] = [];
+            for (const [name, isTypeOnly] of symbols) {
+              (isTypeOnly ? typeOnly : value).push(name);
+            }
+            typeOnly.sort();
+            value.sort();
+            if (value.length === 0) {
+              return `import type { ${typeOnly.join(', ')} } from '${importPath}';`;
+            }
+            const parts = [...typeOnly.map(n => `type ${n}`), ...value];
+            return `import { ${parts.join(', ')} } from '${importPath}';`;
+          })
           .join('\n');
         output = output.replace(
           '// generated by freezedts, do not edit\n',
