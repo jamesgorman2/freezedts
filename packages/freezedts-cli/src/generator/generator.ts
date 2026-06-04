@@ -112,38 +112,32 @@ export function generate(filePaths: string[], config?: ResolvedConfig): Generate
         errors.push(...validationErrors.map(e => `${filePath}: ${e}`));
       }
       if (classes.length > 0) {
-        // Collect same-file exported non-freezed local declarations
+        // Collect same-file local declarations, routing each to localTypes
+        // (exported) or nonExportedLocals (not). Ambient (declare) declarations
+        // are global/usable without import and are skipped entirely.
         const localTypes = new Map<string, 'type' | 'value'>();
-        for (const ta of sourceFile.getTypeAliases()) {
-          if (ta.isExported()) localTypes.set(ta.getName(), 'type');
-        }
-        for (const iface of sourceFile.getInterfaces()) {
-          if (iface.isExported()) localTypes.set(iface.getName(), 'type');
-        }
-        for (const en of sourceFile.getEnums()) {
-          if (en.isExported()) localTypes.set(en.getName(), 'value');
-        }
-        for (const cd of sourceFile.getClasses()) {
-          const name = cd.getName();
-          if (!name || !cd.isExported()) continue;
-          if (cd.getDecorators().some(d => d.getName() === 'freezed')) continue;
-          localTypes.set(name, 'value');
-        }
         const nonExportedLocals = new Set<string>();
+        const record = (name: string, kind: 'type' | 'value', exported: boolean) => {
+          if (exported) localTypes.set(name, kind);
+          else nonExportedLocals.add(name);
+        };
         for (const ta of sourceFile.getTypeAliases()) {
-          if (!ta.isExported()) nonExportedLocals.add(ta.getName());
+          if (ta.hasDeclareKeyword()) continue;
+          record(ta.getName(), 'type', ta.isExported());
         }
         for (const iface of sourceFile.getInterfaces()) {
-          if (!iface.isExported()) nonExportedLocals.add(iface.getName());
+          if (iface.hasDeclareKeyword()) continue;
+          record(iface.getName(), 'type', iface.isExported());
         }
         for (const en of sourceFile.getEnums()) {
-          if (!en.isExported()) nonExportedLocals.add(en.getName());
+          if (en.hasDeclareKeyword()) continue;
+          record(en.getName(), 'value', en.isExported());
         }
         for (const cd of sourceFile.getClasses()) {
           const name = cd.getName();
-          if (!name || cd.isExported()) continue;
+          if (!name || cd.hasDeclareKeyword()) continue;
           if (cd.getDecorators().some(d => d.getName() === 'freezed')) continue;
-          nonExportedLocals.add(name);
+          record(name, 'value', cd.isExported());
         }
         parsed.set(filePath, { absolutePath, classes, localTypes, nonExportedLocals });
       }
@@ -320,11 +314,15 @@ export function generate(filePaths: string[], config?: ResolvedConfig): Generate
         for (const name of [...symbols.keys()]) {
           const winner = seen.get(name);
           if (winner === undefined) { seen.set(name, importPath); continue; }
+          const winnerSymbols = imports.get(winner)!;
+          const merged = winnerSymbols.get(name)! && symbols.get(name)!; // value (false) wins
           if (pathRank(importPath) < pathRank(winner)) {
-            imports.get(winner)!.delete(name);
+            winnerSymbols.delete(name);
+            symbols.set(name, merged);
             seen.set(name, importPath);
           } else {
             symbols.delete(name);
+            winnerSymbols.set(name, merged);
           }
         }
       }
