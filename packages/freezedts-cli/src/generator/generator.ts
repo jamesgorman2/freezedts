@@ -97,7 +97,7 @@ export function generate(filePaths: string[], config?: ResolvedConfig): Generate
   const warnings: string[] = [];
 
   // Phase 1: Parse all files
-  const parsed = new Map<string, { absolutePath: string; classes: ReturnType<typeof parseFreezedClasses>['classes']; localTypes: Map<string, 'type' | 'value'> }>();
+  const parsed = new Map<string, { absolutePath: string; classes: ReturnType<typeof parseFreezedClasses>['classes']; localTypes: Map<string, 'type' | 'value'>; nonExportedLocals: Set<string> }>();
 
   for (const filePath of filePaths) {
     const absolutePath = path.resolve(filePath);
@@ -129,7 +129,23 @@ export function generate(filePaths: string[], config?: ResolvedConfig): Generate
           if (cd.getDecorators().some(d => d.getName() === 'freezed')) continue;
           localTypes.set(name, 'value');
         }
-        parsed.set(filePath, { absolutePath, classes, localTypes });
+        const nonExportedLocals = new Set<string>();
+        for (const ta of sourceFile.getTypeAliases()) {
+          if (!ta.isExported()) nonExportedLocals.add(ta.getName());
+        }
+        for (const iface of sourceFile.getInterfaces()) {
+          if (!iface.isExported()) nonExportedLocals.add(iface.getName());
+        }
+        for (const en of sourceFile.getEnums()) {
+          if (!en.isExported()) nonExportedLocals.add(en.getName());
+        }
+        for (const cd of sourceFile.getClasses()) {
+          const name = cd.getName();
+          if (!name || cd.isExported()) continue;
+          if (cd.getDecorators().some(d => d.getName() === 'freezed')) continue;
+          nonExportedLocals.add(name);
+        }
+        parsed.set(filePath, { absolutePath, classes, localTypes, nonExportedLocals });
       }
     } catch (e) {
       errors.push(`${filePath}: ${e instanceof Error ? e.message : String(e)}`);
@@ -144,11 +160,12 @@ export function generate(filePaths: string[], config?: ResolvedConfig): Generate
       classToFile.set(cls.className, filePath);
     }
   }
-  for (const [filePath, { absolutePath, classes }] of parsed) {
+  for (const [filePath, { absolutePath, classes, localTypes }] of parsed) {
     for (const cls of classes) {
       for (const prop of cls.properties) {
         const baseType = extractBaseTypeName(prop.type);
-        const sourceFilePath = classToFile.get(baseType);
+        const shadowedLocally = localTypes.has(baseType);
+        const sourceFilePath = shadowedLocally ? undefined : classToFile.get(baseType);
         if (sourceFilePath) {
           // Only mark isFreezed for exact class references (not arrays, unions, or generics)
           const strippedType = prop.type.replace(/\s*\|\s*undefined$/, '').trim();
@@ -184,7 +201,7 @@ export function generate(filePaths: string[], config?: ResolvedConfig): Generate
   }
 
   // Phase 4: Emit and write
-  for (const [filePath, { absolutePath, classes, localTypes }] of parsed) {
+  for (const [filePath, { absolutePath, classes, localTypes, nonExportedLocals }] of parsed) {
     try {
       let output = emitFreezedFile(classes);
 
@@ -203,6 +220,7 @@ export function generate(filePaths: string[], config?: ResolvedConfig): Generate
       };
       const ownFreezedPath = './' + path.basename(absolutePath, '.ts') + '.freezed.js';
       for (const cls of classes) {
+        const classLine = project.getSourceFileOrThrow(absolutePath).getClass(cls.className)?.getStartLineNumber() ?? 1;
         for (const prop of cls.properties) {
           const importedNames = new Set<string>();
 
@@ -225,7 +243,7 @@ export function generate(filePaths: string[], config?: ResolvedConfig): Generate
           const allIdentifiers = extractTypeIdentifiers(prop.type);
           for (const id of allIdentifiers) {
             if (importedNames.has(id)) continue;
-            const idSourcePath = classToFile.get(id);
+            const idSourcePath = localTypes.has(id) ? undefined : classToFile.get(id);
             if (idSourcePath) {
               let importPath: string;
               if (idSourcePath !== filePath) {
@@ -248,12 +266,24 @@ export function generate(filePaths: string[], config?: ResolvedConfig): Generate
           // Pass 2b: same-file exported non-freezed local declarations
           for (const id of allIdentifiers) {
             if (importedNames.has(id)) continue;
-            if (classToFile.get(id)) continue;
+            if (classToFile.get(id) && !localTypes.has(id)) continue;
             const kind = localTypes.get(id);
             if (kind) {
               const importPath = './' + path.basename(absolutePath, '.ts') + '.js';
               addImport(importPath, id, kind === 'type');
               importedNames.add(id);
+            }
+          }
+
+          // Pass 2c: warn on references to same-file NON-exported local declarations.
+          for (const id of allIdentifiers) {
+            if (importedNames.has(id)) continue;
+            if (classToFile.get(id)) continue;
+            if (nonExportedLocals.has(id)) {
+              warnings.push(
+                `${filePath}:${classLine}: property '${prop.name}' references ` +
+                `non-exported local type '${id}'; export it so the generated file can import it`,
+              );
             }
           }
 
@@ -281,6 +311,25 @@ export function generate(filePaths: string[], config?: ResolvedConfig): Generate
           }
         }
       }
+      // Cross-path dedup: each symbol name bound by exactly one import.
+      // Precedence: own source file > external typeImports > synthetic *.freezed.js (With types).
+      const ownLocalPath = './' + path.basename(absolutePath, '.ts') + '.js';
+      const seen = new Map<string, string>();
+      const pathRank = (p: string) => (p === ownLocalPath ? 0 : p.endsWith('.freezed.js') ? 2 : 1);
+      for (const [importPath, symbols] of imports) {
+        for (const name of [...symbols.keys()]) {
+          const winner = seen.get(name);
+          if (winner === undefined) { seen.set(name, importPath); continue; }
+          if (pathRank(importPath) < pathRank(winner)) {
+            imports.get(winner)!.delete(name);
+            seen.set(name, importPath);
+          } else {
+            symbols.delete(name);
+          }
+        }
+      }
+      for (const [p, s] of [...imports]) if (s.size === 0) imports.delete(p);
+
       if (imports.size > 0) {
         const importLines = [...imports.entries()]
           .sort(([a], [b]) => a.localeCompare(b))
